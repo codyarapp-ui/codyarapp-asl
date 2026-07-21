@@ -1,0 +1,4 @@
+-keep class ir.cafebazaar.poolakey.** { *; }
+-keep interface ir.cafebazaar.poolakey.** { *; }
+-keep class com.farsitel.bazaar.** { *; }
+-dontwarn ir.cafebazaar.poolakey.**

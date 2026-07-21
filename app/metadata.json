@@ -1,0 +1,6 @@
+{
+  "name": "کدیار24",
+  "description": "Codyar24 is an intelligent, offline-persisted cognitive assistant and developer companion powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

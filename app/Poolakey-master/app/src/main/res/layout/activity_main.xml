@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center">
+
+    <LinearLayout
+        android:id="@+id/root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/serviceConnectionStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16sp"
+            android:gravity="center"
+            android:text="@string/general_service_connection_not_connected_text" />
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/skuValueInput"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="@string/general_product_id_hint"
+            android:padding="16dp" />
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/dynamicPriceToken"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="@string/general_dynamic_price_token_hint"
+            android:padding="16dp" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/consumeSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:padding="16dp"
+            android:text="@string/general_consume_purchase_text" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/purchaseButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_purchase_text" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/subscribeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_subscribe_text" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/queryPurchasedItemsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_query_purchase_text" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/querySubscribedItemsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_query_subscription_text" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/getSkuDetailInAppButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_get_sku_detail_inapp_text" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/getSkuDetailSubscriptionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_get_sku_detail_sub_text" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/checkTrialSubscriptionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_check_trial_subscription_text" />
+
+    </LinearLayout>
+</ScrollView>

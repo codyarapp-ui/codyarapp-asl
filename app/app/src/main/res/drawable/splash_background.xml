@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Solid Navy Background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/codyar_navy" />
+        </shape>
+    </item>
+    <!-- Centered Logo (Vector, so transparent and fits perfectly) -->
+    <item
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:width="120dp"
+        android:height="120dp"
+        android:gravity="center" />
+</layer-list>
