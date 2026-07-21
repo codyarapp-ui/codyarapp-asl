@@ -116,7 +116,9 @@ export interface PartPurchase {
   customerAddress: string;
   price: number;
   date: string;
-  status: 'pending' | 'shipped' | 'delivered';
+  status: 'pending_payment' | 'pending' | 'shipped' | 'delivered' | 'rejected';
+  cardHolder?: string;
+  trackNumber?: string;
 }
 
 export interface Notification {

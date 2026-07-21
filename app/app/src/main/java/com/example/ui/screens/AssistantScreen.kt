@@ -923,6 +923,7 @@ fun AssistantScreen(
                 }
             )
         }
+
         // --- CART DIALOG ---
         if (showCartDialog) {
             AlertDialog(
@@ -1093,7 +1094,7 @@ fun AssistantScreen(
                                         color = Color(0xFF1E40AF)
                                     )
                                     Text(
-                                        text = "قطعات انتخابی شما در سبد خرید ذخیره شد. برای پرداخت (زرین‌پال یا کارت‌به‌کارت) و ثبت نهایی سفارش، به وب‌سایت رسمی کدیار۲۴ مراجعه کنید.",
+                                        text = "قطعات انتخابی شما در سبد خرید ذخیره شد. برای پرداخت و ثبت نهایی سفارش، به وب‌سایت رسمی کدیار۲۴ مراجعه کنید.",
                                         fontSize = 11.sp,
                                         color = Color(0xFF1E40AF),
                                         lineHeight = 18.sp
@@ -1111,26 +1112,51 @@ fun AssistantScreen(
                                     Toast.makeText(context, "لطفاً ابتدا وارد حساب کاربری خود شوید.", Toast.LENGTH_SHORT).show()
                                     showAuthDialog = true
                                 } else {
-                                    try {
-                                        val token = viewModel.getSessionToken() ?: ""
-                                        val phone = currentUser?.phone ?: ""
-                              val webUri = "https://kodyar24.ir/?entry=client&token=$token#parts-store-section"
-                                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(webUri))
-                                        context.startActivity(intent)
-                                        showCartDialog = false
-                                        Toast.makeText(context, "برای تکمیل خرید و پرداخت به وب‌سایت کدیار۲۴ منتقل شدید.", Toast.LENGTH_LONG).show()
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, "خطا در باز کردن وب‌سایت", Toast.LENGTH_SHORT).show()
+                                    val token = viewModel.getSessionToken() ?: ""
+                                    // Construct the WooCommerce auto-login and cart injection URL
+                                    val webUri = if (cartItemsList.size == 1) {
+                                        val partId = cartItemsList[0]
+                                        val qty = cartQtyMap[partId] ?: 1
+                                        "https://kodyar24.ir/cart/?add-to-cart=$partId&quantity=$qty&entry=client&token=$token"
+                                    } else {
+                                        val idsJoined = cartItemsList.joinToString(",")
+                                        "https://kodyar24.ir/cart/?add-to-cart=$idsJoined&entry=client&token=$token"
+                                    }
+
+                                    viewModel.submitPartPurchaseOrdersToServer { success, errorMsg ->
+                                        if (success) {
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(webUri))
+                                                context.startActivity(intent)
+                                                showCartDialog = false
+                                                Toast.makeText(context, "در حال انتقال به وب‌سایت کدیار۲۴ جهت پرداخت...", Toast.LENGTH_LONG).show()
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "خطا در باز کردن وب‌سایت", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            Toast.makeText(context, errorMsg ?: "خطا در ثبت سفارش", Toast.LENGTH_LONG).show()
+                                        }
                                     }
                                 }
                             },
+                            enabled = !isPurchaseLoading,
                             colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("submit_order_button"),
                             shape = RoundedCornerShape(11.dp)
                         ) {
-                            Text("تکمیل خرید در وب‌سایت 🌐", fontWeight = FontWeight.Bold)
+                            if (isPurchaseLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("در حال ثبت سفارش...", fontWeight = FontWeight.Bold)
+                            } else {
+                                Text("تکمیل خرید در وب‌سایت 🌐", fontWeight = FontWeight.Bold)
+                            }
                         }
                     } else {
                         Button(

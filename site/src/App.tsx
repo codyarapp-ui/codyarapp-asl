@@ -1675,45 +1675,54 @@ export default function App() {
       alert('هیچ درخواستی با این شماره تلفن همراه یافت نشد.');
     }
   };
+  const handlePurchasePart = async (part: SparePart, address: string, buyerName: string, buyerPhone: string, cardHolder: string, trackNumber: string) => {
+    try {
+      const token = localStorage.getItem('session_user_id') || '';
+      const response = await fetch('/api/payment/card-verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': token
+        },
+        body: JSON.stringify({
+          card_holder: cardHolder,
+          track_number: trackNumber,
+          product_id: part.id
+        })
+      });
+      const data = await response.json();
 
-  const handlePurchasePart = (part: SparePart, address: string, buyerName?: string, buyerPhone?: string) => {
-    // Subtract from stock
-    const updatedParts = spareParts.map(p => {
-      if (p.id === part.id) {
-        return { ...p, stock: Math.max(0, p.stock - 1) };
+      if (!response.ok || data.status !== 'ok') {
+        triggerNotification('ثبت ناموفق', data.error || 'ثبت اطلاعات فیش پرداخت با خطا مواجه شد.', 'error');
+        return;
       }
-      return p;
-    });
-    savePartsToStorage(updatedParts);
 
-    // Record the purchase in the database
-    const newPurchase: PartPurchase = {
-      id: `PUR-${Math.floor(100000 + Math.random() * 900000)}`,
-      partId: part.id,
-      partName: part.name,
-      partCategory: part.category,
-      customerName: buyerName || 'مشتری ناشناس',
-      customerPhone: buyerPhone || '09121111111',
-      customerAddress: address,
-      price: part.price,
-      date: new Date().toLocaleDateString('fa-IR'),
-      status: 'pending'
-    };
+      const newPurchase: PartPurchase = {
+        id: `PUR-${Math.floor(100000 + Math.random() * 900000)}`,
+        partId: part.id,
+        partName: part.name,
+        partCategory: part.category,
+        customerName: buyerName || 'مشتری ناشناس',
+        customerPhone: buyerPhone || '09121111111',
+        customerAddress: address,
+        price: part.price,
+        date: new Date().toLocaleDateString('fa-IR'),
+        status: 'pending_payment',
+        cardHolder,
+        trackNumber
+      };
 
-    const updatedPurchases = [newPurchase, ...partPurchases];
-    savePurchasesToStorage(updatedPurchases);
+      const updatedPurchases = [newPurchase, ...partPurchases];
+      savePurchasesToStorage(updatedPurchases);
 
-    triggerNotification(
-      'خرید آنلاین قطعه',
-      `تراکنش شتاب برای خرید "${part.name}" با موفقیت ثبت شد. محموله به آدرس "${address}" فرستاده می‌شود.`,
-      'success'
-    );
-
-    triggerNotification(
-      'پیامک انبارداری کالا',
-      `سفارش قطعه یدکی شما به کد رهگیری PAR-${Math.floor(1000 + Math.random() * 9000)} آماده تحویل به پست پیشتاز گردید. هماهنگی قطعه‌سازان ایران.`,
-      'sms'
-    );
+      triggerNotification(
+        'ثبت درخواست خرید قطعه',
+        `اطلاعات فیش پرداخت "${part.name}" ثبت شد و در انتظار تایید واحد مالی است.`,
+        'info'
+      );
+    } catch (err) {
+      triggerNotification('خطای اتصال', 'امکان ارتباط با سرور برای ثبت پرداخت وجود ندارد.', 'error');
+    }
   };
 
   const handleFilterPartsForSelectedError = (category: string, brand: string) => {
@@ -2088,6 +2097,30 @@ export default function App() {
       status: 'completed',
       completed_at: new Date().toISOString()
     };
+
+    if (payment.type === 'part_purchase' && payment.partId) {
+      const updatedParts = spareParts.map(p =>
+        p.id === payment.partId ? { ...p, stock: Math.max(0, p.stock - 1) } : p
+      );
+      const updatedPurchases = partPurchases.map(pp =>
+        pp.trackNumber === payment.ref_id ? { ...pp, status: 'pending' as const } : pp
+      );
+
+      setSpareParts(updatedParts);
+      setPartPurchases(updatedPurchases);
+      setPaymentsList(updatedPayments);
+
+      const success = await syncWithBackend({
+        payments: updatedPayments,
+        spareParts: updatedParts,
+        partPurchases: updatedPurchases
+      });
+
+      if (success) {
+        triggerNotification('تایید پرداخت قطعه', 'فیش پرداخت تایید شد و موجودی قطعه به‌روزرسانی شد.', 'success');
+      }
+      return;
+    }
     
     const plansList = [
       { id: "1_month", duration_days: 30 },
@@ -2139,6 +2172,22 @@ export default function App() {
       ...payment,
       status: 'failed'
     };
+
+    if (payment.type === 'part_purchase') {
+      const updatedPurchases = partPurchases.map(pp =>
+        pp.trackNumber === payment.ref_id ? { ...pp, status: 'rejected' as const } : pp
+      );
+      setPartPurchases(updatedPurchases);
+      setPaymentsList(updatedPayments);
+      const success = await syncWithBackend({
+        payments: updatedPayments,
+        partPurchases: updatedPurchases
+      });
+      if (success) {
+        triggerNotification('رد فیش پرداخت قطعه', 'درخواست خرید قطعه رد شد.', 'warning');
+      }
+      return;
+    }
     
     setPaymentsList(updatedPayments);
     const success = await syncWithBackend({

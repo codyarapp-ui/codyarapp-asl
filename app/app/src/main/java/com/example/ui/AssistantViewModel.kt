@@ -1028,7 +1028,7 @@ class AssistantViewModel(
         _purchaseSuccess.value = false
     }
 
-    fun submitPurchase(address: String, notes: String, cardHolder: String, trackNumber: String, onResult: (Boolean, String?) -> Unit) {
+    fun submitPartPurchaseOrdersToServer(onResult: (Boolean, String?) -> Unit) {
         val token = getSessionToken()
         if (token == null) {
             onResult(false, "باید وارد حساب خود شوید")
@@ -1038,31 +1038,16 @@ class AssistantViewModel(
         viewModelScope.launch {
             _isPurchaseLoading.value = true
             try {
-                // We'll iterate and call API for each item as done in HTML
-                for (partId in _cart.value) {
+                val user = _currentUser.value
+                val city = user?.city ?: "تهران"
+                val cartList = _cart.value.toList()
+                val qtyMap = _cartQty.value.toMap()
+
+                for (partId in cartList) {
                     val part = _liveSpareParts.value.find { it.id == partId } ?: continue
-                    val qty = _cartQty.value[partId] ?: 1
+                    val qty = qtyMap[partId] ?: 1
                     val price = part.price ?: 0.0
                     val subtotal = price * qty
-
-                    val response = repository.purchasePart(
-                        token = token,
-                        partId = partId,
-                        partName = part.name ?: "",
-                        qty = qty,
-                        price = price,
-                        total = subtotal,
-                        address = address,
-                        notes = notes,
-                        cardHolder = cardHolder,
-                        track = trackNumber
-                    )
-
-                    if (response.status != "ok" && response.status != "success") {
-                        onResult(false, response.error ?: "خطا در ثبت فیش برای قطعه ${part.name}")
-                        _isPurchaseLoading.value = false
-                        return@launch
-                    }
 
                     // Save locally for profile display
                     val order = PartPurchaseOrder(
@@ -1072,20 +1057,18 @@ class AssistantViewModel(
                         quantity = qty,
                         unitPrice = price,
                         totalPrice = subtotal,
-                        address = address,
-                        notes = notes,
+                        address = city,
+                        notes = "ثبت شده در اپلیکیشن (ادامه پرداخت در وب‌سایت)",
                         dateStr = getCurrentPersianDate(),
                         status = "pending" // initial state
                     )
                     savePartPurchase(order)
                 }
                 _purchaseSuccess.value = true
-                _cart.value = emptyList()
-                _cartQty.value = emptyMap()
-                loadRepairs()
+                clearCart()
                 onResult(true, null)
             } catch (e: Exception) {
-                onResult(false, "خطای ارتباط با سرور: ${e.message}")
+                onResult(false, "خطا در ثبت محلی سفارش: ${e.message}")
             } finally {
                 _isPurchaseLoading.value = false
             }
@@ -1151,10 +1134,14 @@ class AssistantViewModel(
                     )
                 }
                 
-                // Merge server-fetched purchases with any existing local purchases, preventing duplicates
-                val localPurchases = _partPurchases.value
-                val mergedPurchases = (mappedPurchases + localPurchases).distinctBy { it.id }
-                _partPurchases.value = mergedPurchases
+                // Overwrite local cache with server-fetched purchases as the source of truth
+                _partPurchases.value = mappedPurchases
+                try {
+                    val json = partPurchasesAdapter.toJson(mappedPurchases)
+                    sharedPrefs.edit().putString("part_purchases_json", json).apply()
+                } catch (ex: java.lang.Exception) {
+                    Log.e("AssistantViewModel", "Error updating local part purchases cache", ex)
+                }
             } catch (e: Exception) {
                 Log.e("AssistantViewModel", "Error fetching repairs", e)
             } finally {

@@ -41,54 +41,18 @@ interface KodyarApiService {
         @Body request: RepairRequest
     ): KodyarResponse
 
-    @POST("api/repairs")
-    suspend fun createRepairAlt1(
-        @Header("X-Session-Token") sessionToken: String,
-        @Body request: RepairRequest
-    ): KodyarResponse
-
-    @POST("api/repairs/store")
-    suspend fun createRepairAlt2(
-        @Header("X-Session-Token") sessionToken: String,
-        @Body request: RepairRequest
-    ): KodyarResponse
-
-    @POST("api/repair/create")
-    suspend fun createRepairAlt3(
-        @Header("X-Session-Token") sessionToken: String,
-        @Body request: RepairRequest
-    ): KodyarResponse
-
-    @POST("api/repair/store")
-    suspend fun createRepairAlt4(
-        @Header("X-Session-Token") sessionToken: String,
-        @Body request: RepairRequest
-    ): KodyarResponse
-
-    @POST("api/repair")
-    suspend fun createRepairAlt5(
-        @Header("X-Session-Token") sessionToken: String,
-        @Body request: RepairRequest
-    ): KodyarResponse
-
     @POST("api/payment/card-verify")
     suspend fun verifyCard(
         @Header("X-Session-Token") sessionToken: String,
         @Body request: CardVerifyRequest
     ): KodyarResponse
 
-    @POST("api/store/purchase")
-    suspend fun purchasePart(
-        @Header("X-Session-Token") sessionToken: String,
-        @Body request: PurchaseRequest
-    ): KodyarResponse
-
-    @GET("api/free/status")
+    @GET("api/free-views")
     suspend fun getFreeStatus(
         @Header("X-Session-Token") sessionToken: String
     ): KodyarResponse
 
-    @POST("api/free/use")
+    @POST("api/free-views")
     suspend fun useFree(
         @Header("X-Session-Token") sessionToken: String,
         @Body request: FreeUseRequest
@@ -116,21 +80,6 @@ data class RepairRequest(val technician_id: String?, val description: String, va
 
 @JsonClass(generateAdapter = true)
 data class CardVerifyRequest(val card_holder: String, val track_number: String, val product_id: String)
-
-@JsonClass(generateAdapter = true)
-data class PurchaseRequest(
-    val part_id: String,
-    val product_id: String,
-    val part_name: String,
-    val product_name: String,
-    val quantity: Int,
-    val unit_price: Double,
-    val total_price: Double,
-    val address: String,
-    val notes: String,
-    val card_holder: String,
-    val track_number: String
-)
 
 @JsonClass(generateAdapter = true)
 data class FreeUseRequest(val type: String)

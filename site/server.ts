@@ -3239,30 +3239,40 @@ app.post("/api/payment/card-verify", (req, res) => {
     ];
 
     const selectedPlan = plansList.find((p: any) => p.id === productId);
-    if (!selectedPlan) {
-      return res.status(404).json({ status: "error", error: "پلن عضویت انتخابی یافت نشد." });
+    const selectedPart = (db.spareParts || []).find((p: any) => p.id === productId);
+
+    if (!selectedPlan && !selectedPart) {
+      return res.status(404).json({ status: "error", error: "پلن عضویت یا قطعه انتخابی یافت نشد." });
     }
 
     // Process payment as pending for manual admin verification
     const paymentId = `pay_card_${Date.now()}`;
-    const newPayment = {
+    const newPayment: any = {
       id: paymentId,
       user_id: sessionUserId,
-      amount: selectedPlan.price,
+      amount: selectedPlan ? selectedPlan.price : selectedPart.price,
       gateway: "card_to_card",
       status: "pending",
       ref_id: trackNumber,
       card_holder: cardHolder,
-      plan: productId,
+      type: selectedPlan ? "subscription" : "part_purchase",
       created_at: new Date().toISOString()
     };
+
+    if (selectedPlan) {
+      newPayment.plan = productId;
+    } else {
+      newPayment.partId = productId;
+    }
 
     db.payments.push(newPayment);
     writeDb(db);
 
     return res.json({
       status: "ok",
-      message: `اطلاعات واریزی (کارت‌به‌کارت) شما با شماره پیگیری ${trackNumber} ثبت گردید. سیستم بلافاصله پس از بررسی فیش توسط واحد مالی، اشتراک طلایی شما را فعال می‌نماید (تا حداکثر ۲ ساعت).`
+      message: selectedPlan
+        ? `اطلاعات واریزی (کارت‌به‌کارت) شما با شماره پیگیری ${trackNumber} ثبت گردید. سیستم بلافاصله پس از بررسی فیش توسط واحد مالی، اشتراک طلایی شما را فعال می‌نماید (تا حداکثر ۲ ساعت).`
+        : `اطلاعات واریزی (کارت‌به‌کارت) شما برای خرید قطعه با شماره پیگیری ${trackNumber} ثبت گردید. پس از تایید واحد مالی (حداکثر ۲ ساعت)، قطعه ارسال می‌شود.`
     });
 
   } catch (err: any) {

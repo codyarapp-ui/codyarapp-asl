@@ -106,116 +106,38 @@ class AssistantRepository(
         }
     }
 
+    // TODO: Official repair creation endpoint pending confirmation. Using api/repairs/create for now.
     suspend fun createRepair(token: String, techId: String, desc: String, city: String): com.example.data.model.KodyarResponse = withContext(Dispatchers.IO) {
         val finalTechId = if (techId.isBlank()) null else techId
         val request = com.example.data.api.RepairRequest(finalTechId, desc, city)
-        var lastException: Exception? = null
-
-        // 1. Try api/repairs/create (Default)
         try {
-            val res = kodyarApiService.createRepair(token, request)
-            if (res.status == "ok" || res.status == "success") return@withContext res
-            if (res.error != null) lastException = Exception(res.error)
+            kodyarApiService.createRepair(token, request)
         } catch (e: Exception) {
-            lastException = e
+            com.example.data.model.KodyarResponse(
+                status = "error",
+                user = null,
+                error = "خطا در ثبت درخواست در سایت: ${e.message}",
+                repairs = emptyList(),
+                data = emptyList(),
+                error_count = null,
+                problem_count = null
+            )
         }
-
-        // 2. Try api/repairs (POST)
-        try {
-            val res = kodyarApiService.createRepairAlt1(token, request)
-            if (res.status == "ok" || res.status == "success") return@withContext res
-            if (res.error != null) lastException = Exception(res.error)
-        } catch (e: Exception) {
-            lastException = e
-        }
-
-        // 3. Try api/repairs/store (POST)
-        try {
-            val res = kodyarApiService.createRepairAlt2(token, request)
-            if (res.status == "ok" || res.status == "success") return@withContext res
-            if (res.error != null) lastException = Exception(res.error)
-        } catch (e: Exception) {
-            lastException = e
-        }
-
-        // 4. Try api/repair/create (POST)
-        try {
-            val res = kodyarApiService.createRepairAlt3(token, request)
-            if (res.status == "ok" || res.status == "success") return@withContext res
-            if (res.error != null) lastException = Exception(res.error)
-        } catch (e: Exception) {
-            lastException = e
-        }
-
-        // 5. Try api/repair/store (POST)
-        try {
-            val res = kodyarApiService.createRepairAlt4(token, request)
-            if (res.status == "ok" || res.status == "success") return@withContext res
-            if (res.error != null) lastException = Exception(res.error)
-        } catch (e: Exception) {
-            lastException = e
-        }
-
-        // 6. Try api/repair (POST)
-        try {
-            val res = kodyarApiService.createRepairAlt5(token, request)
-            if (res.status == "ok" || res.status == "success") return@withContext res
-            if (res.error != null) lastException = Exception(res.error)
-        } catch (e: Exception) {
-            lastException = e
-        }
-
-        com.example.data.model.KodyarResponse(
-            status = "error",
-            user = null,
-            error = "خطا در ثبت درخواست در سایت: ${lastException?.message ?: "خطای ناشناخته در سرور"}",
-            repairs = emptyList(),
-            data = emptyList(),
-            error_count = null,
-            problem_count = null
-        )
     }
 
     suspend fun verifyCard(token: String, cardHolder: String, trackNumber: String, productId: String) = withContext(Dispatchers.IO) {
         try {
-            val res = kodyarApiService.verifyCard(token, com.example.data.api.CardVerifyRequest(cardHolder, trackNumber, productId))
-            if (res.status == "ok") {
-                res
-            } else {
-                throw Exception(res.error ?: "API status error")
-            }
+            kodyarApiService.verifyCard(token, com.example.data.api.CardVerifyRequest(cardHolder, trackNumber, productId))
         } catch (e: Exception) {
-            // Fallback: Submit as a repair ticket so it's guaranteed to be registered on the website's database
-            try {
-                val formattedDescription = "ثبت فیش خرید اشتراک ویژه کدیار۲۴ - شناسه پکیج: $productId - شماره فیش/پیگیری: $trackNumber - نام صاحب کارت: $cardHolder"
-                kodyarApiService.createRepair(
-                    token,
-                    com.example.data.api.RepairRequest(
-                        technician_id = null,
-                        description = formattedDescription,
-                        city = "تهران"
-                    )
-                )
-                com.example.data.model.KodyarResponse(
-                    status = "ok",
-                    user = null,
-                    error = null,
-                    repairs = emptyList(),
-                    data = emptyList(),
-                    error_count = null,
-                    problem_count = null
-                )
-            } catch (e2: Exception) {
-                com.example.data.model.KodyarResponse(
-                    status = "error",
-                    user = null,
-                    error = "خطا در ثبت فیش خرید در سایت: ${e2.message}",
-                    repairs = emptyList(),
-                    data = emptyList(),
-                    error_count = null,
-                    problem_count = null
-                )
-            }
+            com.example.data.model.KodyarResponse(
+                status = "error",
+                user = null,
+                error = "خطا در تأیید کارت: ${e.message}",
+                repairs = emptyList(),
+                data = emptyList(),
+                error_count = null,
+                problem_count = null
+            )
         }
     }
 
@@ -230,22 +152,10 @@ class AssistantRepository(
         notes: String,
         cardHolder: String,
         track: String
-    ) = withContext(Dispatchers.IO) {
+    ): com.example.data.model.KodyarResponse = withContext(Dispatchers.IO) {
         try {
-            // Since the website doesn't have a dedicated api/store/purchase route (which returns 404),
-            // we register part purchases via the standard api/repairs/create endpoint with a formatted description.
-            // This ensures the order is fully registered on the website's database and displays under the user's panel.
-            // We use 'تهران' as the city parameter to ensure any city-length validation on the backend passes safely,
-            // while the full, detailed address is saved inside the description.
-            val formattedDescription = "خرید قطعه: $partName - تعداد: $qty - مبلغ: ${total.toLong()} تومان - آدرس: $address - فیش: $track - صاحب کارت: $cardHolder - یادداشت: $notes"
-            kodyarApiService.createRepair(
-                token,
-                com.example.data.api.RepairRequest(
-                    technician_id = null,
-                    description = formattedDescription,
-                    city = "تهران"
-                )
-            )
+            // Call the correct card-verify endpoint as requested by user
+            kodyarApiService.verifyCard(token, com.example.data.api.CardVerifyRequest(cardHolder, track, partId))
         } catch (e: Exception) {
             com.example.data.model.KodyarResponse(
                 status = "error",

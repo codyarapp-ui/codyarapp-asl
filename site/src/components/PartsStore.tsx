@@ -31,8 +31,8 @@ export const PartsStore: React.FC<PartsStoreProps> = ({
   const [userName, setUserName] = React.useState('');
   const [userPhone, setUserPhone] = React.useState('');
   const [userAddress, setUserAddress] = React.useState('');
-  const [cardNumber, setCardNumber] = React.useState('');
-
+  const [cardHolder, setCardHolder] = React.useState('');
+  const [trackNumber, setTrackNumber] = React.useState('');
   const categories = ['همه', 'پکیج', 'ماشین لباسشویی', 'یخچال و فریزر', 'کولر گازی'];
 
   const filteredParts = parts.filter(part => {
@@ -52,13 +52,12 @@ export const PartsStore: React.FC<PartsStoreProps> = ({
     setActiveCheckoutPart(part);
     setCheckoutStep('form');
   };
-
   const handleConfirmPurchase = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userName || !userPhone || !userAddress || (activeCheckoutPart && activeCheckoutPart.stock < 1)) return;
+    if (!userName || !userPhone || !userAddress || !cardHolder || !trackNumber || (activeCheckoutPart && activeCheckoutPart.stock < 1)) return;
     
     if (activeCheckoutPart) {
-      onPurchase(activeCheckoutPart, userAddress, userName, userPhone);
+      onPurchase(activeCheckoutPart, userAddress, userName, userPhone, cardHolder, trackNumber);
       setCheckoutStep('success');
     }
   };
@@ -219,7 +218,7 @@ export const PartsStore: React.FC<PartsStoreProps> = ({
             <div className="bg-slate-950 text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-blue-400" />
-                <h3 className="font-bold text-xs">درگاه پرداخت الکترونیک شتاب</h3>
+                <h3 className="font-bold text-xs">ثبت رسید پرداخت کارت‌به‌کارت</h3>
               </div>
               <button
                 onClick={() => setActiveCheckoutPart(null)}
@@ -286,21 +285,31 @@ export const PartsStore: React.FC<PartsStoreProps> = ({
                     />
                   </div>
 
-                  {/* Card number simulation */}
-                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                    <span className="text-[9px] text-slate-400 block mb-1">شماره کارت ۱۶ رقمی شتاب (دلخواه)</span>
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-[11px] text-amber-800 leading-relaxed">
+                    لطفاً مبلغ فوق را به شماره کارت اعلامی توسط پشتیبانی واریز کرده و اطلاعات فیش را در زیر ثبت کنید.
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-600 text-[10px] font-bold mb-1">نام صاحب کارت واریزکننده *</label>
                     <input
-                      maxLength={19}
+                      required
                       type="text"
-                      value={cardNumber}
-                      onChange={(e) => {
-                        // format to 1234-1234-1234-1234 format
-                        const val = e.target.value.replace(/\D/g, '');
-                        const parts = val.match(/.{1,4}/g) || [];
-                        setCardNumber(parts.join('-'));
-                      }}
-                      placeholder="۶۰۳۷-۹۹۷۵-...."
-                      className="w-full bg-white border border-slate-200 px-3 py-2 text-xs rounded-lg text-center tracking-widest font-mono"
+                      value={cardHolder}
+                      onChange={(e) => setCardHolder(e.target.value)}
+                      placeholder="مثال: علی احمدی"
+                      className="w-full bg-slate-50 border border-slate-200 px-3 py-2 text-xs rounded-xl outline-none focus:bg-white focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-600 text-[10px] font-bold mb-1">شماره پیگیری فیش واریزی *</label>
+                    <input
+                      required
+                      type="text"
+                      value={trackNumber}
+                      onChange={(e) => setTrackNumber(e.target.value)}
+                      placeholder="مثال: 123456789"
+                      className="w-full bg-slate-50 border border-slate-200 px-3 py-2 text-xs rounded-xl outline-none focus:bg-white focus:border-blue-500 text-left"
                     />
                   </div>
                 </div>
@@ -311,21 +320,20 @@ export const PartsStore: React.FC<PartsStoreProps> = ({
                   className="w-full mt-5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white rounded-xl py-2.5 text-xs font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>تایید پرداخت و ثبت نهایی سفارش قطعه</span>
-                </button>
+                  <span>ثبت اطلاعات فیش پرداخت</span>                </button>
               </form>
             ) : (
               <div className="p-8 text-center bg-white">
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 scale-105 animate-pulse">
                   <Check className="w-8 h-8 text-emerald-600" />
                 </div>
-                <h4 className="font-bold text-slate-800 text-sm mb-2">سفارش قطعه شما با موفقیت ثبت شد!</h4>
+                <h4 className="font-bold text-slate-800 text-sm mb-2">درخواست شما ثبت شد!</h4>
                 <p className="text-slate-500 text-xs leading-relaxed max-w-sm mx-auto mb-4">
-                  همکار ما در انبار قطعات تا کتر از ۳۰ دقیقه آینده جهت تایید ارسال کالا با شماره <span className="font-semibold text-slate-800">{userPhone}</span> تماس خواهند گرفت.
+                  فیش پرداخت شما ثبت شد و پس از تایید توسط واحد مالی (حداکثر ۲ ساعت)، قطعه رزرو و ارسال می‌شود. نتیجه از طریق پیامک به شماره <span className="font-semibold text-slate-800">{userPhone}</span> اطلاع داده خواهد شد.
                 </p>
                 <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-[11px] text-slate-600 text-right mb-5 grid grid-cols-2 gap-2">
-                  <div>کد رهگیری: <span className="font-bold text-slate-900 font-mono">PAR-{Math.floor(1000 + Math.random() * 9000)}</span></div>
-                  <div>وضعیت: <span className="text-emerald-600 font-medium font-sans">آماده بسته‌بندی</span></div>
+                  <div>شماره پیگیری: <span className="font-bold text-slate-900 font-mono">{trackNumber}</span></div>
+                  <div>وضعیت: <span className="text-amber-600 font-medium font-sans">در انتظار تایید پرداخت</span></div>
                 </div>
 
                 <button
