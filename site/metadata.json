@@ -1,6 +1,0 @@
-{
-  "name": "کدیار24 | سامانه مدیریت کدهای خطا و تعمیرات",
-  "description": "پلتفرم جامع جستجوی کدهای خطا، آموزش عیب‌یابی، ثبت درخواست آنلاین تعمیرات، فروش قطعات و پنل‌های اختصاصی تکنسین و مدیریت",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
