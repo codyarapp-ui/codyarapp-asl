@@ -1149,8 +1149,48 @@ async function initMySqlAndLoadCache() {
   console.log(`- Local db.json: ${localErrorCount} diagnostic entries, ${localUserCount} users, ${localTechCount} technicians`);
   console.log(`- Live MySQL DB: ${mysqlErrorCount} diagnostic entries, ${mysqlUserCount} users, ${mysqlTechCount} technicians`);
 
-  // MySQL is ALWAYS the single source of truth when online
-  if (loadedDb && (loadedDb.users?.length > 0 || loadedDb.errorCodes?.length > 0 || loadedDb.orders?.length > 0)) {
+  // MySQL is ALWAYS the single source of truth when online, but merge missing seed technicians from localDb
+  if (loadedDb) {
+    if (localDb && Array.isArray(localDb.technicians) && localDb.technicians.length > 0) {
+      if (!loadedDb.technicians) loadedDb.technicians = [];
+      if (!loadedDb.users) loadedDb.users = [];
+
+      const existingTechPhones = new Set(loadedDb.technicians.map((t: any) => String(t.phone || '').trim()));
+      const existingUserPhones = new Set(loadedDb.users.map((u: any) => String(u.phone || '').trim()));
+
+      let missingAdded = false;
+      for (const tech of localDb.technicians) {
+        const tPhone = String(tech.phone || '').trim();
+        if (tPhone && !existingTechPhones.has(tPhone)) {
+          loadedDb.technicians.push(tech);
+          existingTechPhones.add(tPhone);
+          missingAdded = true;
+        }
+        if (tPhone && !existingUserPhones.has(tPhone)) {
+          loadedDb.users.push({
+            id: tech.id,
+            phone: tech.phone,
+            password_hash: tech.password,
+            full_name: tech.name,
+            role: "technician",
+            city: tech.activeLocation || "تهران",
+            created_at: new Date().toISOString()
+          });
+          existingUserPhones.add(tPhone);
+          missingAdded = true;
+        }
+      }
+
+      if (missingAdded && !isMySqlOffline) {
+        console.log("[MySQL] Merged seed technicians from localDb into live MySQL database.");
+        try {
+          await writeDbAsync(loadedDb);
+        } catch (mErr: any) {
+          console.warn("[MySQL] Warning syncing merged technicians to MySQL:", mErr.message);
+        }
+      }
+    }
+
     console.log("[MySQL] Using live MySQL DB as single source of truth. Writing offline cache backup snapshot to db.json...");
     globalDb = loadedDb;
     try {
@@ -4607,7 +4647,26 @@ app.get("/api/get-database", (req, res) => {
   try {
     console.log("[API] GET /api/get-database called");
     const db = readDb();
-    res.json(db);
+    
+    // Security Sanitization: Deep copy and strip sensitive internal fields before returning to public client
+    const safeDb = JSON.parse(JSON.stringify(db));
+    delete safeDb.adminPassword;
+    
+    if (safeDb.users && Array.isArray(safeDb.users)) {
+      safeDb.users = safeDb.users.map((u: any) => {
+        const { password_hash, password, ...safeUser } = u;
+        return safeUser;
+      });
+    }
+
+    if (safeDb.technicians && Array.isArray(safeDb.technicians)) {
+      safeDb.technicians = safeDb.technicians.map((t: any) => {
+        const { password, password_hash, ...safeTech } = t;
+        return safeTech;
+      });
+    }
+
+    res.json(safeDb);
   } catch (err: any) {
     console.error("Error in GET /api/get-database:", err);
     res.status(500).json({ error: "خطا در بازیابی پایگاه داده", details: err.message });
@@ -4712,9 +4771,34 @@ app.post("/api/save-database", (req, res) => {
     }
 
     const currentDb = readDb();
+
+    // Preserve existing password hashes if clientData omits or sends blank passwords
+    if (clientData.users && Array.isArray(clientData.users) && currentDb.users) {
+      const userMap = new Map<string, any>(currentDb.users.map((u: any) => [u.id, u]));
+      clientData.users = clientData.users.map((u: any) => {
+        const existing = userMap.get(u.id);
+        return {
+          ...u,
+          password_hash: u.password_hash || u.password || (existing ? existing.password_hash : "")
+        };
+      });
+    }
+
+    if (clientData.technicians && Array.isArray(clientData.technicians) && currentDb.technicians) {
+      const techMap = new Map<string, any>(currentDb.technicians.map((t: any) => [t.id, t]));
+      clientData.technicians = clientData.technicians.map((t: any) => {
+        const existing = techMap.get(t.id);
+        return {
+          ...t,
+          password: t.password || t.password_hash || (existing ? existing.password : "")
+        };
+      });
+    }
+
     const updatedDb = {
       ...currentDb,
-      ...clientData
+      ...clientData,
+      adminPassword: currentDb.adminPassword || clientData.adminPassword
     };
 
     const success = writeDb(updatedDb);
