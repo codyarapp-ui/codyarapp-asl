@@ -1050,6 +1050,54 @@ function getCentralState($pdo) {
         }
         
         $state['orders'] = $mappedOrders;
+        
+        // 8.1 Load orders_v2 if present
+        try {
+            $v2Stmt = $pdo->query("SELECT * FROM orders_v2 ORDER BY id DESC");
+            if ($v2Stmt) {
+                $mysqlV2 = $v2Stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($mysqlV2 as $v2) {
+                    $v2Id = strval($v2['id']);
+                    $alreadyExists = false;
+                    foreach ($mappedOrders as $mo) {
+                        if (strval($mo['id']) === $v2Id) {
+                            $alreadyExists = true;
+                            break;
+                        }
+                    }
+                    if (!$alreadyExists) {
+                        $mappedOrders[] = array(
+                            "id" => $v2Id,
+                            "customerName" => $v2['customer_name'] ?? 'مشتری گرامی',
+                            "customerPhone" => $v2['customer_phone'] ?? '',
+                            "city" => $v2['city'] ?? 'تهران',
+                            "region" => "عمومی",
+                            "address" => $v2['address'] ?? '',
+                            "category" => $v2['appliance_type'] ?? 'پکیج',
+                            "brand" => $v2['brand'] ?? 'بوتان',
+                            "model" => $v2['model'] ?? 'عمومی',
+                            "errorCode" => $v2['error_code'] ?? 'نامعلوم',
+                            "description" => $v2['description'] ?? '',
+                            "status" => $v2['status'] ?? 'waiting',
+                            "date" => explode(' ', $v2['created_at'] ?? date('Y-m-d'))[0],
+                            "timeSlot" => "هماهنگی بعدی",
+                            "technicianId" => $v2['technician_id'] ? strval($v2['technician_id']) : "",
+                            "technicianName" => "",
+                            "technicianPhone" => "",
+                            "estimatedCost" => floatval($v2['amount'] ?? 0),
+                            "repairLog" => "",
+                            "partsUsed" => array(),
+                            "mediaUrls" => array(),
+                            "rating" => null,
+                            "review" => "",
+                            "createdAt" => $v2['created_at'] ?? date('Y-m-d H:i:s')
+                        );
+                    }
+                }
+            }
+        } catch (Exception $eV2) {}
+
+        $state['orders'] = $mappedOrders;
         $state['repairRequests'] = $mappedOrders;
         
         // 9. Load smsLogs
@@ -1256,10 +1304,31 @@ function saveCentralState($pdo, $data) {
         if (array_key_exists('storeOrders', $data)) {
             mysqlSyncList($pdo, 'part_purchases', $data['storeOrders'], $partPurchaseMappings, 'id');
         }
-        if (array_key_exists('orders', $data)) {
+        if (array_key_exists('orders', $data) && is_array($data['orders'])) {
             mysqlSyncList($pdo, 'repair_orders', $data['orders'], $repairOrderMappings, 'id');
+            try {
+                foreach ($data['orders'] as $ord) {
+                    if (empty($ord['id'])) continue;
+                    $idVal = (string)$ord['id'];
+                    $cName = $ord['customerName'] ?? '';
+                    $cPhone = $ord['customerPhone'] ?? '';
+                    $appliance = $ord['category'] ?? '';
+                    $brand = $ord['brand'] ?? '';
+                    $model = $ord['model'] ?? '';
+                    $errCode = $ord['errorCode'] ?? '';
+                    $desc = $ord['description'] ?? '';
+                    $st = $ord['status'] ?? 'waiting';
+                    $city = $ord['city'] ?? '';
+                    $addr = $ord['address'] ?? '';
+                    $amt = floatval($ord['estimatedCost'] ?? 0);
+                    $techId = $ord['technicianId'] ?? null;
+
+                    $stmtV2 = $pdo->prepare("INSERT INTO `orders_v2` (`id`, `customer_name`, `customer_phone`, `appliance_type`, `brand`, `model`, `error_code`, `description`, `status`, `city`, `address`, `amount`, `technician_id`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `customer_name`=VALUES(`customer_name`), `customer_phone`=VALUES(`customer_phone`), `appliance_type`=VALUES(`appliance_type`), `brand`=VALUES(`brand`), `model`=VALUES(`model`), `error_code`=VALUES(`error_code`), `description`=VALUES(`description`), `status`=VALUES(`status`), `city`=VALUES(`city`), `address`=VALUES(`address`), `amount`=VALUES(`amount`), `technician_id`=VALUES(`technician_id`)");
+                    $stmtV2->execute(array($idVal, $cName, $cPhone, $appliance, $brand, $model, $errCode, $desc, $st, $city, $addr, $amt, $techId));
+                }
+            } catch (Exception $eV2) {}
         }
-        if (array_key_exists('repairRequests', $data)) {
+        if (array_key_exists('repairRequests', $data) && is_array($data['repairRequests'])) {
             mysqlSyncList($pdo, 'repair_orders', $data['repairRequests'], $repairOrderMappings, 'id');
         }
         if (array_key_exists('smsLogs', $data)) {

@@ -325,12 +325,15 @@ export const TechnicianPanel: React.FC<TechnicianPanelProps> = ({
     return getCityFromLoc(activeTech.activeLocation) || 'تهران';
   }, [activeTech.activeLocation]);
 
+  const [showAllLocations, setShowAllLocations] = React.useState(false);
+
   const activeMyOrders = orders.filter((o) => o.technicianId === activeTech.id);
-  const rawAvailableOrders = orders.filter((o) => o.status === 'waiting' && !o.technicianId);
+  const rawAvailableOrders = orders.filter((o) => (!o.status || (o.status as string) === 'waiting' || (o.status as string) === 'pending' || o.status === 'registered' || (o.status as string) === 'new') && (!o.technicianId || o.technicianId === ''));
 
   const filteredAvailableOrders = rawAvailableOrders.filter((o) => {
+    if (showAllLocations) return true;
     const oCity = getCityFromLoc(o.city);
-    const tCity = getCityFromLoc(activeTech.activeLocation);
+    const tCity = getCityFromLoc(activeTech.activeLocation) || getCityFromLoc((activeTech as any).city);
     if (!tCity) return true;
     return oCity.toLowerCase() === tCity.toLowerCase() || oCity.includes(tCity) || tCity.includes(oCity);
   });
@@ -545,10 +548,27 @@ export const TechnicianPanel: React.FC<TechnicianPanelProps> = ({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border border-slate-205 p-4 rounded-xl shadow-xs">
             <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 select-none">
               <MapPin className="w-4 h-4 text-blue-500" />
-              محدوده جغرافیایی مجاز کارتابل شما:
+              محدوده جغرافیایی سفارش‌های جدید:
             </span>
-            <div className="bg-blue-50 text-blue-700 font-extrabold px-3 py-1.5 rounded-lg text-xs font-sans">
-              📍 شهر {techCityName} (فقط امکان قبول و مشاهده کارهای ثبت شده در این شهر را دارید)
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setShowAllLocations(false)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  !showAllLocations ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                📍 شهر/استان من ({techCityName})
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAllLocations(true)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  showAllLocations ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                🌐 همه استان‌ها ({rawAvailableOrders.length})
+              </button>
             </div>
           </div>
 

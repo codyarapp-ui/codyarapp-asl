@@ -175,9 +175,11 @@ export default function App() {
   const lastLocalUpdateRef = React.useRef(0);
   // Current user / auth state
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [clientActiveTab, setClientActiveTab] = useState<'search' | 'dashboard'>('search');
 
   const checkAuth = async () => {
+    setIsAuthChecking(true);
     try {
       const token = localStorage.getItem('session_user_id') || '';
       const response = await fetch('/api/auth/me', {
@@ -210,6 +212,8 @@ export default function App() {
       console.error('Error checking auth:', error);
       setCurrentUser(null);
       return null;
+    } finally {
+      setIsAuthChecking(false);
     }
   };
 
@@ -1353,6 +1357,8 @@ export default function App() {
 
   // 2. Strict Access Control & Routing redirects for Requirements 2 & 8
   useEffect(() => {
+    if (isAuthChecking) return;
+
     const checkAdminRouteAccess = () => {
       const path = window.location.pathname;
       setCurrentPath(path);
@@ -1387,8 +1393,10 @@ export default function App() {
       } else {
         // If they are on regular path, but active role is admin, guide URL back to admin-panel
         if (currentRole === 'admin' && path !== '/admin-panel' && path !== '/admin') {
-          window.history.pushState({}, '', '/admin-panel');
-          setCurrentPath('/admin-panel');
+          if (isAdminActive) {
+            window.history.pushState({}, '', '/admin-panel');
+            setCurrentPath('/admin-panel');
+          }
         }
       }
     };
@@ -1399,7 +1407,7 @@ export default function App() {
     return () => {
       window.removeEventListener('popstate', checkAdminRouteAccess);
     };
-  }, [currentRole, currentUser, loggedInTechId]);
+  }, [currentRole, currentUser, loggedInTechId, isAuthChecking]);
 
   // Sync helper with database in the backend
   const syncWithBackend = async (payload: Record<string, any>) => {

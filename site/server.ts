@@ -703,6 +703,27 @@ async function readDbAsync(): Promise<any> {
     console.warn("[MySQL] Warning loading sms_logs_v2:", err.message);
   }
 
+  try {
+    const [errRows] = await p.query("SELECT * FROM error_codes_v2");
+    if (Array.isArray(errRows) && errRows.length > 0) {
+      db.errorCodes = errRows.map((row: any) => ({
+        id: row.id,
+        code: row.code || "",
+        category: row.category || "",
+        brand: row.brand || "",
+        model: row.model || "",
+        title: row.title || "",
+        description: row.description || "",
+        causes: parseJsonColumn(row.causes) || (typeof row.causes === "string" ? row.causes : []),
+        steps: parseJsonColumn(row.steps) || (typeof row.steps === "string" ? row.steps : []),
+        precautions: parseJsonColumn(row.precautions) || (typeof row.precautions === "string" ? row.precautions : []),
+        hazardLevel: row.hazardLevel || "medium"
+      }));
+    }
+  } catch (err: any) {
+    console.warn("[MySQL] Warning loading error_codes_v2:", err.message);
+  }
+
   return db;
 }
 
@@ -810,12 +831,7 @@ async function writeDbAsync(db: any): Promise<boolean> {
       );
     }
 
-    const allIds = allUserPayloads.map(pld => pld.id);
-    if (allIds.length > 0) {
-      await p.query("DELETE FROM users_v2 WHERE id NOT IN (?)", [allIds]);
-    } else {
-      await p.query("DELETE FROM users_v2");
-    }
+    // REMOVED DESTRUCTIVE DELETE: no mass deletes on users_v2
 
     const orders = db.orders || [];
     for (const order of orders) {
@@ -828,12 +844,8 @@ async function writeDbAsync(db: any): Promise<boolean> {
         [order.id, order.user_id, order.technician_id, order.applianceType, order.brand, order.model, order.errorCode, order.description, order.status, order.city, order.address, order.amount, invoiceSentVal, order.customerName, order.customerPhone, trackingHistoryJson]
       );
     }
-    const orderIds = orders.map((o: any) => o.id);
-    if (orderIds.length > 0) {
-      await p.query("DELETE FROM orders_v2 WHERE id NOT IN (?)", [orderIds]);
-    } else {
-      await p.query("DELETE FROM orders_v2");
-    }
+
+    // REMOVED DESTRUCTIVE DELETE: no mass deletes on orders_v2
 
     const payments = db.payments || [];
     for (const pay of payments) {
@@ -844,12 +856,8 @@ async function writeDbAsync(db: any): Promise<boolean> {
         [pay.id, pay.user_id, pay.amount, pay.gateway, pay.status, pay.plan, pay.authority, pay.refId || pay.ref_id]
       );
     }
-    const payIds = payments.map((p: any) => p.id);
-    if (payIds.length > 0) {
-      await p.query("DELETE FROM payments_v2 WHERE id NOT IN (?)", [payIds]);
-    } else {
-      await p.query("DELETE FROM payments_v2");
-    }
+
+    // REMOVED DESTRUCTIVE DELETE: no mass deletes on payments_v2
 
     const subscriptions = db.subscriptions || [];
     for (const sub of subscriptions) {
@@ -863,12 +871,8 @@ async function writeDbAsync(db: any): Promise<boolean> {
         [sub.id, sub.user_id, sub.plan, isPremiumVal, startDateSql, endDateSql]
       );
     }
-    const subIds = subscriptions.map((s: any) => s.id);
-    if (subIds.length > 0) {
-      await p.query("DELETE FROM subscriptions_v2 WHERE id NOT IN (?)", [subIds]);
-    } else {
-      await p.query("DELETE FROM subscriptions_v2");
-    }
+
+    // REMOVED DESTRUCTIVE DELETE: no mass deletes on subscriptions_v2
 
     const smsLogs = db.smsLogs || [];
     for (const log of smsLogs) {
@@ -879,11 +883,35 @@ async function writeDbAsync(db: any): Promise<boolean> {
         [log.id, log.phone, log.message, log.provider, log.status]
       );
     }
-    const smsIds = smsLogs.map((l: any) => l.id);
-    if (smsIds.length > 0) {
-      await p.query("DELETE FROM sms_logs_v2 WHERE id NOT IN (?)", [smsIds]);
-    } else {
-      await p.query("DELETE FROM sms_logs_v2");
+
+    // REMOVED DESTRUCTIVE DELETE: no mass deletes on sms_logs_v2
+
+    const errorCodes = db.errorCodes || [];
+    for (const err of errorCodes) {
+      const causesStr = typeof err.causes === 'object' ? JSON.stringify(err.causes) : String(err.causes || '');
+      const stepsStr = typeof err.steps === 'object' ? JSON.stringify(err.steps) : String(err.steps || '');
+      const precsStr = typeof err.precautions === 'object' ? JSON.stringify(err.precautions) : String(err.precautions || '');
+      await p.query(
+        `INSERT INTO error_codes_v2 (id, code, category, brand, model, title, description, causes, steps, precautions, hazardLevel)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE 
+          code = VALUES(code), category = VALUES(category), brand = VALUES(brand), model = VALUES(model),
+          title = VALUES(title), description = VALUES(description), causes = VALUES(causes),
+          steps = VALUES(steps), precautions = VALUES(precautions), hazardLevel = VALUES(hazardLevel)`,
+        [
+          err.id || `err_${Date.now()}_${Math.random().toString(36).substring(2,7)}`,
+          err.code || err.errorCode || "",
+          err.category || "",
+          err.brand || "",
+          err.model || "",
+          err.title || err.errorTitle || "",
+          err.description || "",
+          causesStr,
+          stepsStr,
+          precsStr,
+          err.hazardLevel || err.hazard_level || "medium"
+        ]
+      );
     }
 
     return true;
@@ -1121,53 +1149,29 @@ async function initMySqlAndLoadCache() {
   console.log(`- Local db.json: ${localErrorCount} diagnostic entries, ${localUserCount} users, ${localTechCount} technicians`);
   console.log(`- Live MySQL DB: ${mysqlErrorCount} diagnostic entries, ${mysqlUserCount} users, ${mysqlTechCount} technicians`);
 
-  // We prioritize the local db.json if it has MORE error codes or more users or more technicians.
-  // This is crucial because when a user uploads/deploys a new db.json, we want to load it and sync it to MySQL.
-  const isLocalDBLarger = (localErrorCount > mysqlErrorCount || localUserCount > mysqlUserCount || localTechCount > mysqlTechCount);
-
-  if (isLocalDBLarger && localDb) {
-    console.log("[MySQL] Local db.json contains MORE records than live MySQL. Prioritizing local db.json and seeding to live MySQL...");
-    globalDb = localDb;
-    
-    // Seed MySQL with the local db.json to synchronize if online
-    if (!isMySqlOffline) {
-      try {
-        const success = await writeDbAsync(globalDb);
-        if (success) {
-          console.log("[MySQL] Synchronization of local db.json to live MySQL completed successfully!");
-        } else {
-          console.log("[MySQL] Synchronization bypassed (MySQL offline or unreachable).");
-        }
-      } catch (seedErr: any) {
-        console.warn("[MySQL] Error synchronizing local db.json to live MySQL:", seedErr.message);
-      }
-    } else {
-      console.log("[Database Mode] Running entirely on local db.json cache because MySQL is offline.");
-    }
-  } else if (loadedDb && (loadedDb.users?.length > 0 || loadedDb.errorCodes?.length > 0)) {
-    console.log("[MySQL] Live MySQL has equal or more records than local file. Using live MySQL and writing cache copy to db.json...");
+  // MySQL is ALWAYS the single source of truth when online
+  if (loadedDb && (loadedDb.users?.length > 0 || loadedDb.errorCodes?.length > 0 || loadedDb.orders?.length > 0)) {
+    console.log("[MySQL] Using live MySQL DB as single source of truth. Writing offline cache backup snapshot to db.json...");
     globalDb = loadedDb;
     try {
       fs.writeFileSync(DB_FILE, JSON.stringify(globalDb, null, 2), "utf-8");
     } catch (e) {
-      console.warn("Failed to write globalDb to local file:", e);
+      console.warn("Failed to write globalDb backup to local file:", e);
+    }
+  } else if (!isMySqlOffline && localDb && (localDb.users?.length > 0 || localDb.errorCodes?.length > 0)) {
+    console.log("[MySQL] Live MySQL appears empty. Initializing MySQL from local db.json file...");
+    globalDb = localDb;
+    try {
+      const success = await writeDbAsync(globalDb);
+      if (success) {
+        console.log("[MySQL] Initial seed from local db.json to MySQL completed.");
+      }
+    } catch (seedErr: any) {
+      console.warn("[MySQL] Error seeding local db.json to MySQL:", seedErr.message);
     }
   } else {
-    console.log("[MySQL] No live MySQL data found or MySQL is offline. Loading local db.json file...");
-    globalDb = localDb || { ...DEFAULT_DB };
-    
-    if (!isMySqlOffline) {
-      try {
-        const success = await writeDbAsync(globalDb);
-        if (success) {
-          console.log("[MySQL] Synced local database backup to live MySQL.");
-        }
-      } catch (err: any) {
-        console.warn("[MySQL] Could not seed local database to live MySQL:", err.message);
-      }
-    } else {
-      console.log("[Database Mode] Running entirely on local db.json cache because MySQL is offline.");
-    }
+    console.log("[MySQL] Loading available database state or local fallback...");
+    globalDb = loadedDb || localDb || { ...DEFAULT_DB };
   }
 }
 
@@ -3300,18 +3304,42 @@ app.post("/api/repairs/create", (req, res) => {
       return res.status(400).json({ status: "error", error: "پر کردن تمامی فیلدهای الزامی درخواست تعمیر ضروری است." });
     }
 
+    if (!db.orders) db.orders = [];
     if (!db.repairRequests) db.repairRequests = [];
 
+    const orderId = `repair_${Date.now()}`;
+    const newOrder = {
+      id: orderId,
+      user_id: user.id,
+      technician_id: "",
+      applianceType: appliance,
+      brand: brand,
+      model: model || "عمومی",
+      errorCode: req.body.error_code || req.body.errorCode || "نامعلوم",
+      description: problem,
+      status: "waiting",
+      city: city,
+      address: (req.body.address || "").trim(),
+      amount: 0,
+      invoice_sent: false,
+      customerName: user.full_name || "مشتری گرامی",
+      customerPhone: user.phone || "",
+      trackingHistory: [{ status: "registered", date: new Date().toISOString(), title: "ثبت اولیه درخواست" }],
+      created_at: new Date().toISOString()
+    };
+
+    db.orders.push(newOrder);
+
     const newRepair = {
-      id: `repair_${Date.now()}`,
+      id: orderId,
       user_id: user.id,
       city,
       appliance,
       brand,
       model,
       problem_description: problem,
-      status: "pending",
-      created_at: new Date().toISOString()
+      status: "waiting",
+      created_at: newOrder.created_at
     };
 
     db.repairRequests.push(newRepair);
@@ -3319,7 +3347,7 @@ app.post("/api/repairs/create", (req, res) => {
 
     logActivity(user.id, "repair_request_created", req, `ثبت درخواست تعمیر (${appliance} ${brand} ${model})`);
 
-    return res.json({ status: "ok", message: "درخواست عیب‌یابی و اعزام تکنسین با موفقیت ثبت شد.", repair: newRepair });
+    return res.json({ status: "ok", message: "درخواست عیب‌یابی و اعزام تکنسین با موفقیت ثبت شد.", repair: newRepair, order: newOrder });
   } catch (err: any) {
     console.error("Error creating repair request:", err);
     return res.status(500).json({ status: "error", error: "خطا در ثبت درخواست تعمیر: " + err.message });
@@ -3335,8 +3363,23 @@ app.get("/api/repairs/list", (req, res) => {
       return res.status(401).json({ status: "error", error: "کاربر محرز هویت نشده است." });
     }
 
-    const userRepairs = (db.repairRequests || []).filter((r: any) => r.user_id === user.id);
-    return res.json({ status: "ok", repair_requests: userRepairs });
+    if (user.role === "technician") {
+      const techCity = (user.city || "").trim().toLowerCase();
+      const showAll = req.query.all === "true" || req.query.all === "1";
+      const techOrders = (db.orders || []).filter((o: any) => {
+        const isAvailable = !o.technician_id || o.technician_id === "" || o.technician_id === user.id;
+        if (!isAvailable) return false;
+        if (showAll || !techCity) return true;
+        const oCity = (o.city || "").trim().toLowerCase();
+        return oCity.includes(techCity) || techCity.includes(oCity);
+      });
+      return res.json({ status: "ok", repair_requests: techOrders, orders: techOrders });
+    } else if (user.role === "admin") {
+      return res.json({ status: "ok", repair_requests: db.orders || [], orders: db.orders || [] });
+    } else {
+      const userOrders = (db.orders || []).filter((r: any) => r.user_id === user.id || (r.customerPhone && r.customerPhone === user.phone));
+      return res.json({ status: "ok", repair_requests: userOrders, orders: userOrders });
+    }
   } catch (err: any) {
     console.error("Error fetching repair requests:", err);
     return res.status(500).json({ status: "error", error: "خطا در دریافت لیست درخواست‌های تعمیر: " + err.message });
@@ -3447,7 +3490,21 @@ app.post("/api/store/update-order", (req, res) => {
       return res.status(404).json({ status: "error", error: "سفارش یافت نشد." });
     }
 
-    db.storeOrders[orderIndex].status = status;
+    const ord = db.storeOrders[orderIndex];
+    const prevStatus = ord.status;
+    ord.status = status;
+
+    if ((status === "confirmed" || status === "shipped") && prevStatus !== "confirmed" && prevStatus !== "shipped" && db.spareParts && Array.isArray(db.spareParts)) {
+      if (ord.part_id) {
+        const partIdx = db.spareParts.findIndex((p: any) => String(p.id) === String(ord.part_id));
+        if (partIdx !== -1 && db.spareParts[partIdx].stock !== undefined) {
+          const currentStock = parseInt(db.spareParts[partIdx].stock) || 0;
+          const qty = parseInt(ord.quantity) || 1;
+          db.spareParts[partIdx].stock = Math.max(0, currentStock - qty);
+        }
+      }
+    }
+
     writeDb(db);
 
     return res.json({ status: "ok", message: "وضعیت سفارش بروزرسانی شد." });
