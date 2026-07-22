@@ -1,0 +1,23 @@
+# GEMINI_API_KEY: Required for Gemini AI API calls.
+# AI Studio automatically injects this at runtime from user secrets.
+# Users configure this via the Secrets panel in the AI Studio UI.
+GEMINI_API_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOiI2YTM0MGJiOWQ0YWM4NTBmZGY3MGRkOTQiLCJ0eXBlIjoiYXV0aCIsImlhdCI6MTc4MTk4MDgxNCwiZXhwIjoxNzg0NTcyODE0fQ.DA-XBOFzim5yusswyJgQdpU0-qj0LnLFO6hDFXvz10s"
+# APP_URL: The URL where this applet is hosted.
+# AI Studio automatically injects this at runtime with the Cloud Run service URL.
+# Used for self-referential links, OAuth callbacks, and API endpoints.
+APP_URL="MY_APP_URL"
+
+# DATABASE CONFIGURATION FOR REAL CPANEL MYSQL SERVER
+DB_HOST="localhost"
+DB_USER="bvrfefgr_siteuser"	
+DB_PASS="Abbasi163@#"
+DB_NAME="bvrfefgr_site.bniaz"
+# SMS INTEGRATION CONFIGURATION (Optional - can also be configured via Admin Settings tab)
+# SMS_PROVIDER="farazsms" # Options: farazsms | kavenegar | simulated
+# SMS_API_KEY="YOUR_IRAN_SMS_GATEWAY_API_KEY"
+# SMS_LINE_NUMBER="3000505"
+# ZARINPAL INTEGRATION CONFIGURATION
+ZARINPAL_MERCHANT_ID="00000000-0000-0000-0000-000000000000"
+ZARINPAL_SANDBOX="true" # Set to "false" to enable real commercial production payment gateway
+
+
