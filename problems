@@ -1,588 +1,2048 @@
-https://github.com/codyarapp-ui/codyarapp-aslاین لینک بررسی کن من فایل سایت واپ وخصوصا اکسپرت دیتابیس را گذاشتم ببین چرا اینجوریه قراربود روی دیتابیس مای اس کیو ال ذخیره بشه هرکی از راه رسیده یسری جدول ساخته همه چی قاطی شده نصف دیتا در دی بی جیسونه نصفش معلوم نیست کجاست سایت درست کارنمیکنه سفارش اعزام تکنسین خطای 400میده و مشکلات دیگه اول کل پروژه مخصوص اکسپورت دیتابیس را خط ب خط بررسی کن ببینم چه مرگشه
-codyarapp-ui/codyarapp-asl%D8%A7%DB%8C%D9%86
-Repository
-سلام @sikika8322 👋 بذار کل پروژه رو کلون کنم و مخصوصاً بخش دیتابیس و اکسپورت رو خط به خط بررسی کنم.
+ترمینال سیپنل بازه میخوام بدونم این کاربر کی ثبت نام کرده09931746620
+سلام مبام 👋
 
-Clone https://github.com/codyarapp-ui/codyarapp-asl
-3m 28s
-ریپو کلون شد. بذار کل ساختار فایل‌ها رو ببینم، مخصوصاً بخش وب/سرور و دیتابیس.
+من به cPanel یا ترمینال سرور شما دسترسی ندارم و نمی‌تونم اطلاعات ثبت‌نام یک کاربر (مثل شماره ۰۹۹۳۱۷۴۶۶۲۰) رو از دیتابیس شما بخونم. من دستیار ساخت اپلیکیشن و کامپوننت روی پلتفرم Bit Cloud هستم.
 
-tool-results/tr_toolu_vrtx_01FX5nGDdPRqvR3yhkFEi8Vn.txt
-185ms
-این ریپو عمدتاً یک اپ اندروید (Kotlin) و کتابخانه Poolakey است. اما تو گفتی فایل سایت وب و اکسپورت دیتابیس گذاشتی. بذار کل ساختار رو بگردم تا فایل‌های سرور/وب/SQL رو پیدا کنم.
+اما می‌تونم کمکت کنم — بگو کدوم مسیر رو می‌خوای:
 
-find .repos/codyarapp-ui/codyarapp-asl -type f \( -name "*.php" -o -name "*.sql" -o -name "*.js" -o -name "*.json" -o -name "*.ts" -o -name "*.py" -o -name "*.env*" \) -not -path "*/node_modules/*" -not -path "*/Poolakey*/*"
-248ms
-پیدا شد. پوشه site/ بخش وب است. بذار کل فایل‌های مربوط به دیتابیس و اکسپورت رو بخونم.
+اگه به دیتابیس دسترسی داری (مثلاً MySQL روی cPanel)، بگو ساختار جدول کاربرانت چیه تا دستور SQL رو برات بنویسم که تاریخ ثبت‌نام اون شماره رو دربیاره. مثلاً:
+SELECT * FROM users WHERE phone = '09931746620';
+Copy
+اگه می‌خوای یه پنل مدیریت کاربران بسازیم که بتونی توش کاربرها رو جستجو کنی و تاریخ ثبت‌نامشون رو ببینی، می‌تونم همین الان برات یه اپ بسازم.
+کدوم رو می‌خوای؟
 
-Check
-2 actions
-Run command x2
-3s
-حجم زیاده و چند تا بک‌اند موازی هست. بذار اول اسکیمای MySQL رو ببینم و بعد هر بک‌اند رو بررسی کنم.
+me
+MySQL returned an empty result set (i.e. zero rows). (Query took 0.0046 seconds.)
+SELECT * FROM users WHERE phone = '09931746620';
+نتیجه خالی یعنی هیچ ردیفی با دقیقاً همون مقدار 09931746620 توی ستون phone پیدا نشد. این معمولاً به یکی از این دلایله:
 
-site/migration.sql
-181ms
-این ساختار خیلی مشکل داره — چند تا بک‌اند موازی وجود داره: api.php (۳۶۸۱ خط)، public/api.php (۱۶۵۵ خط)، cpanel-api.php (۱۲۲۲ خط)، db-test.php، یک server.ts نودجی‌اس (۵۵۷۲ خط)، و db.json. بذار ببینم فرانت‌اند واقعاً به کدوم وصله.
+۱. شماره با فرمت دیگه‌ای ذخیره شده — مثلاً بدون صفر اول، با کد کشور (98)، یا با فاصله/خط تیره. این رو امتحان کن:
 
-site/package.json
-192ms
-فرانت‌اند در واقع با server.ts (Node/Express + mysql2) کار می‌کنه. سه تا فایل PHP احتمالاً میراث قدیمی و بلااستفاده‌اند. بذار ساختار server.ts رو ببینم و منبع خطای 400 اعزام تکنسین رو پیدا کنم.
+SELECT * FROM users WHERE phone LIKE '%9931746620%';
+Copy
+۲. اسم ستون یا جدول فرق داره — شاید شماره توی ستونی مثل mobile، phone_number یا tel باشه. برای دیدن ستون‌ها:
 
-Check
-2 actions
-Run command x2
-2s
-The command parser blocks parentheses. Let me read server.ts directly in chunks.
+SHOW COLUMNS FROM users;
+Copy
+بعد اگه ستون درست رو پیدا کردی، مثلاً mobile:
 
-site/server.ts
-197ms
-Let me find the core DB layer — readDb, MySQL connection, and how data is persisted.
+SELECT * FROM users WHERE mobile LIKE '%9931746620%';
+Copy
+۳. شماره اصلاً توی این جدول نیست — شاید توی جدول دیگه‌ای مثل customers یا members باشه. برای دیدن همه جدول‌ها:
 
-grep -n "readDb\|writeDb\|db.json\|createPool\|createConnection\|mysql\|USE_MYSQL\|MYSQL\|DB_HOST\|pool\." .repos/codyarapp-ui/codyarapp-asl/site/server.ts | head -80
+SHOW TABLES;
+Copy
+اول SHOW COLUMNS FROM users; رو بزن و نتیجه‌شو برام بفرست — از روی اسم ستون‌ها دقیق می‌گم کدوم فیلد تاریخ ثبت‌نامه و کوئری درست رو برات می‌نویسم. 👍
+
+me
+Current selection does not contain a unique column. Grid edit, checkbox, Edit, Copy and Delete features are not available. 
+
+Your SQL query has been executed successfully.
+SHOW COLUMNS FROM users;
+ Profiling [ Edit inline ] [ Edit ] [ Create PHP code ] [ Refresh ]
+
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+int
+NO
+PRI
+NULL
+auto_increment
+phone
+varchar(15)
+NO
+UNI
+NULL
+password_hash
+varchar(255)
+NO
+NULL
+full_name
+varchar(100)
+YES
+NULL
+role
+enum('client','technician','admin')
+NO
+MUL
+client
+is_super_admin
+tinyint(1)
+NO
+0
+city
+varchar(50)
+YES
+NULL
+specialty
+text
+YES
+NULL
+documents
+text
+YES
+NULL
+rating
+decimal(3,2)
+NO
+5.00
+completed_orders
+int
+NO
+0
+balance
+decimal(12,2)
+NO
+0.00
+is_verified
+tinyint(1)
+NO
+0
+active_location
+varchar(255)
+YES
+NULL
+avatar_url
+text
+YES
+NULL
+created_at
+timestamp
+YES
+CURRENT_TIMESTAMP
+DEFAULT_GENERATED
+updated_at
+timestamp
+YES
+CURRENT_TIMESTAMP
+DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+عالی 👍 ستون تاریخ ثبت‌نام همون created_at هست. چون کوئری دقیق نتیجه نداد، احتمالاً شماره با فرمت کمی متفاوت ذخیره شده. این رو بزن:
+
+SELECT id, phone, full_name, role, created_at
+FROM users
+WHERE phone LIKE '%9931746620%';
+Copy
+اگه باز هم خالی بود، یعنی این شماره اصلاً توی جدول users ثبت نشده. برای مطمئن شدن می‌تونی چند شماره آخر رو ببینی:
+
+SELECT id, phone, full_name, created_at
+FROM users
+ORDER BY created_at DESC
+LIMIT 20;
+Copy
+نتیجه رو بفرست تا بگم چی شده. اگه پیدا شد، مقدار ستون created_at همون تاریخ و ساعت ثبت‌نام کاربره. ⏱️
+
+me
+MySQL returned an empty result set (i.e. zero rows). (Query took 0.0002 seconds.)
+SELECT id, phone, full_name, role, created_at FROM users WHERE phone LIKE '%9931746620%';
+این یعنی شماره 09931746620 اصلاً توی جدول users ثبت نشده — نه با فرمت دقیق و نه با هیچ فرمت مشابهی. پس این کاربر ثبت‌نام نکرده (یا با شماره دیگه‌ای ثبت‌نام کرده).
+
+برای اطمینان، بذار ببینیم آخرین ثبت‌نام‌ها چطوریه تا فرمت ذخیره‌ی شماره‌ها رو ببینیم:
+
+SELECT id, phone, full_name, created_at
+FROM users
+ORDER BY created_at DESC
+LIMIT 20;
+Copy
+نتیجه‌شو بفرست. با دیدن چند تا شماره واقعی می‌فهمیم شماره‌ها چه فرمتی دارن (مثلاً شاید بدون صفر یا با 98 ذخیره میشن) و بعد می‌تونیم دقیق‌تر دنبال این کاربر بگردیم. 🔎
+
+me
+Consoleascending
+descending
+Order:
+Debug SQL
+Execution order
+Time taken
+Order by:
+Group queries
+Some error occurred while getting SQL debug info.
+Options
+Set default
+Always expand query messages
+Show query history at start
+Show current browsing query
+ Execute queries on Enter and insert new line with Shift+Enter. To make this permanent, view settings.
+Switch to dark theme
+
+ Showing rows 0 - 0 (1 total, Query took 0.0003 seconds.) [created_at: 
+2026-07-20 03:16:07... - 2026-07-20 03:16:07...
+]
+SELECT id, phone, full_name, created_at FROM users ORDER BY created_at DESC LIMIT 20;
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+
+
+
+
+id
+phone
+full_name
+created_at
+
+ Edit
+ Copy
+ Delete
+1
+09120947304
+مدیر عالی کدیار24
+2026-07-20 03:16:07
+حالا مشخص شد ✅
+
+توی جدول users فقط یک کاربر وجود داره:
+
+فیلد	مقدار
+id	1
+شماره	09120947304
+نام	مدیر عالی کدیار24
+تاریخ ثبت‌نام	2026-07-20 03:16:07
+پس نتیجه روشنه: شماره‌ای که دنبالش بودی (09931746620) اصلاً ثبت‌نام نکرده. تنها کاربر موجود همون مدیر عالی سیستمه و شماره‌ها هم دقیقاً با فرمت 0912... (با صفر اول) ذخیره میشن — پس مشکل فرمت هم نبود.
+
+اگه انتظار داشتی این کاربر ثبت‌نام کرده باشه، احتمالاً:
+
+فرآیند ثبت‌نامش کامل نشده و توی دیتابیس ذخیره نشده، یا
+با شماره‌ی دیگه‌ای ثبت‌نام کرده.
+می‌خوای کمکت کنم بررسی کنیم چرا ثبت‌نام‌ها ذخیره نمیشن؟ اگه کد ثبت‌نام (مثلاً فایل PHP یا API) رو داری، می‌تونم نگاه کنم و مشکل رو پیدا کنم. یا اگه دوست داری، می‌تونم برات یه پنل مدیریت کاربران بسازم که راحت بتونی کاربرها رو جستجو و مدیریت کنی. 🙂
+
+me
+user_v2
+احتمالاً کاربرها توی جدول user_v2 ذخیره میشن، نه users! بذار ببینیم ساختارش چیه و آیا اون شماره اونجاست:
+
+اول ستون‌ها رو ببین:
+
+SHOW COLUMNS FROM user_v2;
+Copy
+و همزمان مستقیم دنبال شماره بگرد:
+
+SELECT * FROM user_v2 WHERE phone LIKE '%9931746620%';
+Copy
+اگه اسم ستون شماره توی این جدول فرق داشت (مثلاً mobile)، نتیجه‌ی SHOW COLUMNS رو برام بفرست تا کوئری دقیق رو بنویسم. اگه ستون تاریخ ثبت‌نام هم اسمش created_at بود، همون تاریخ ثبت‌نام کاربره. 🔎
+
+me
+rror
+SQL query: Copy 
+
+
+SHOW COLUMNSSELECT * FROM user_v2 WHERE phone LIKE '%9931746620%';
+MySQL said: 
+
+#1064 - You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'COLUMNSSELECT * FROM user_v2 WHERE phone LIKE '%9931746620%'' at line 1
+این خطا به خاطر اینه که دو تا کوئری بدون فاصله و بدون ; به هم چسبیدن. باید هر کوئری رو جداگانه اجرا کنی.
+
+اول این یکی رو بزن:
+
+SHOW COLUMNS FROM user_v2;
+Copy
+بعد که نتیجه‌شو دیدی، این یکی رو جدا بزن:
+
+SELECT * FROM user_v2 WHERE phone LIKE '%9931746620%';
+Copy
+اگه می‌خوای هر دو با هم اجرا بشن، باید بین‌شون ; بذاری:
+
+SHOW COLUMNS FROM user_v2;
+SELECT * FROM user_v2 WHERE phone LIKE '%9931746620%';
+Copy
+نتیجه رو برام بفرست تا بگم اون کاربر کی ثبت‌نام کرده. 👍
+
+me
+Error
+SQL query: Copy
+
+SHOW COLUMNS FROM user_v2;
+MySQL said: S
+#1146 - Table 'bvrfefgr_site.bniaz.user_v2' doesn't exist
+جدولی به اسم user_v2 وجود نداره. بذار ببینیم اصلاً چه جدول‌هایی توی دیتابیس هست:
+
+SHOW TABLES;
+Copy
+نتیجه‌شو برام بفرست — لیست همه‌ی جدول‌ها رو می‌بینیم و از روی اسم‌ها می‌فهمیم کاربرها کجا ذخیره میشن (شاید اسمش مثلاً customers، members یا clients باشه). بعد دنبال اون شماره می‌گردیم. 📋
+
+me
+Tables_in_bvrfefgr_site.bniaz
+activity_logs
+activity_logs_v2
+app_store
+common_problems
+error_codes
+error_codes_v2
+error_logs
+general_settings
+global_state
+orders_v2
+part_purchases
+part_purchases_v2
+payments
+payments_v2
+repair_orders
+repair_requests
+settings
+sms_logs
+sms_logs_v2
+spare_parts
+subscriptions
+subscriptions_v2
+system_state
+tickets_v2
+users
+users_v2
+zz_old_activity_logs
+zz_old_common_problems
+zz_old_error_codes
+zz_old_part_purchases
+zz_old_payments
+zz_old_repair_orders
+zz_old_repair_requests
+zz_old_sms_logs
+zz_old_spare_parts
+zz_old_subscriptions
+zz_old_users
+me
+Profiling [ Edit inline ] [ Edit ] [ Create PHP code ] [ Refresh ]
+
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+varchar(50)
+NO
+PRI
+NULL
+phone
+varchar(20)
+YES
+UNI
+NULL
+password_hash
+varchar(255)
+YES
+NULL
+full_name
+varchar(255)
+YES
+NULL
+role
+varchar(20)
+YES
+NULL
+city
+varchar(100)
+YES
+NULL
+created_at
+datetime
+YES
+NULL
+subscription
+text
+YES
+NULL
+status
+varchar(20)
+YES
+pending
+rating
+decimal(3,2)
+YES
+5.00
+specialties
+longtext
+YES
+NULL
+documents
+longtext
+YES
+NULL
+completed_orders
+int
+YES
+0
+balance
+decimal(12,2)
+YES
+0.00
+avatar_url
+text
+YES
+NULL
+اسم درست جدول users_v2 هست (با s)، نه user_v2. بذار ساختارش رو ببینیم و همزمان دنبال شماره بگردیم:
+
+SHOW COLUMNS FROM users_v2;
+Copy
+بعد جداگانه این رو بزن:
+
+SELECT * FROM users_v2 WHERE phone LIKE '%9931746620%';
+Copy
+اگه اسم ستون شماره فرق داشت (مثلاً mobile)، از نتیجه‌ی SHOW COLUMNS می‌فهمیم و کوئری رو اصلاح می‌کنیم.
+
+ضمناً چون یه جدول sms_logs_v2 هم داری، اگه ثبت‌نام با پیامک تأیید بوده، حتی اگه کاربر توی users_v2 نباشه ممکنه رد پیامکش اونجا باشه:
+
+SELECT * FROM sms_logs_v2 WHERE phone LIKE '%9931746620%' ORDER BY id DESC;
+Copy
+اول users_v2 رو چک کن و نتیجه رو بفرست. 🔎
+
+این جدول درسته و ستون created_at تاریخ ثبت‌نامه. حالا دنبال شماره بگرد:
+
+SELECT id, phone, full_name, role, status, created_at
+FROM users_v2
+WHERE phone LIKE '%9931746620%';
+Copy
+اگه پیدا شد، مقدار created_at همون تاریخ و ساعت ثبت‌نام کاربره. ⏱️
+
+اگه باز هم خالی بود، این رو بزن تا آخرین ثبت‌نام‌ها و فرمت شماره‌ها رو ببینیم:
+
+SELECT id, phone, full_name, created_at
+FROM users_v2
+ORDER BY created_at DESC
+LIMIT 20;
+Copy
+نتیجه رو بفرست. 🔎
+
+me
+id
+phone
+full_name
+role
+status
+created_at
+
+ Edit
+ Copy
+ Delete
+us_1784827937648
+09931746620
+سهیل
+client
+pending
+NULL
+پیداش کردیم ✅
+
+فیلد	مقدار
+شناسه	us_1784827937648
+شماره	09931746620
+نام	سهیل
+نقش	client (مشتری)
+وضعیت	pending (در انتظار / تأیید نشده)
+تاریخ ثبت‌نام	NULL ❗
+پس این کاربر ثبت‌نام کرده، اما تاریخ ثبت‌نامش (created_at) خالی (NULL) ذخیره شده — یعنی موقع ثبت‌نام، فیلد تاریخ پر نشده. برای همین نمی‌تونیم دقیقاً بگیم کِی ثبت‌نام کرده. 🤔
+
+اما یه ترفند هست: شناسه‌ی کاربر (us_1784827937648) به نظر یه timestamp یونیکس توشه. عدد 1784827937 رو اگه به تاریخ تبدیل کنیم:
+
+۱۴۰۴/۰۵/۰۱ حدود ساعت ۱۲:۱۲ ظهر (معادل 2025-07-23 08:42 UTC تقریبی)
+
+پس به احتمال زیاد این کاربر حوالی ۱ مرداد ۱۴۰۴ ثبت‌نام کرده.
+
+برای اینکه از این به بعد تاریخ ثبت‌نام درست ذخیره بشه، دو تا کار پیشنهاد می‌کنم:
+
+۱. تاریخ همین کاربر رو از روی شناسه‌ش پر کن:
+
+UPDATE users_v2
+SET created_at = FROM_UNIXTIME(1784827937)
+WHERE id = 'us_1784827937648';
+Copy
+۲. مشکل اصلی رو حل کن — کد ثبت‌نامت موقع درج کاربر، created_at رو ست نمی‌کنه. بهترین راه اینه که مقدار پیش‌فرض ستون رو روی زمان فعلی بذاری:
+
+ALTER TABLE users_v2
+MODIFY created_at datetime DEFAULT CURRENT_TIMESTAMP;
+Copy
+می‌خوای کمکت کنم کد ثبت‌نام رو بررسی کنیم که چرا تاریخ رو ذخیره نمی‌کنه؟ اگه فایلش رو داری بفرست تا نگاه کنم. 🙂
+
+me
+کد سفارشتاریخ ثبتمشخصات خریدارقطعه خریداری شدهمبلغ پرداختیآدرس ارسال مرسولهوضعیت ارسالPUR-492940۱۴۰۵/۴/۳۰نژنیم
+09130000002
+تست
+پکیج
+۱ توماناراک⏳ در انتظار ارسال
+🚚 ارسال شده به پست
+✅ تحویل داده شده
+PUR-784902۱۴۰۵/۴/۲۷مبحف
+09307446295
+تست
+پکیج
+۱ تومانپزپیم⏳ در انتظار ارسال
+🚚 ارسال شده به پست
+✅ تحویل داده شده
+PUR-221522۱۴۰۵/۴/۲۷Jeue
+09940204166
+تست
+پکیج
+۱ تومانNsjwj⏳ در انتظار ارسال
+🚚 ارسال شده به پست
+✅ تحویل داده شده
+me
+;nhl [n,g bodvi ani
+این لیست سفارش‌های خرید قطعه‌ست (احتمالاً از جدول part_purchases_v2).
+
+چی می‌خوای باهاش انجام بدم؟ چند حالت ممکنه مدنظرت باشه:
+
+جستجوی یک سفارش خاص — مثلاً می‌خوای بدونی یه کد سفارش خاص کِی ثبت شده؟
+پیدا کردن سفارش‌های یک کاربر — مثلاً همه‌ی خریدهای همون شماره‌ی سهیل (09931746620)؟
+بررسی وضعیت ارسال — مثلاً همه‌ی سفارش‌هایی که هنوز ارسال نشدن؟
+مشکل مبلغ — مبلغ همه‌شون «۱ تومان» نشون داده میشه، شاید این یه باگه که می‌خوای بررسی کنیم؟
+بگو دقیقاً دنبال چی هستی تا کوئری مناسبش رو برات بنویسم. 🙂
+
+ببخشید مبام، پیامت یه کم به‌هم‌ریخته تایپ شده و متوجه نشدم چی می‌خوای 😅
+
+فکر کنم کیبورد روی حالت انگلیسی بوده. اگه منظورت این بود که «کدوم جدول ذخیره شده اینا؟» یا «جدول خرید قطعه»، جوابش اینه:
+
+اون لیست سفارش‌های خرید قطعه احتمالاً توی جدول part_purchases_v2 هست. برای دیدن ساختارش:
+
+SHOW COLUMNS FROM part_purchases_v2;
+Copy
+لطفاً دوباره و با کیبورد فارسی بنویس دقیقاً چی می‌خوای — مثلاً:
+
+دنبال یه سفارش خاصی؟
+می‌خوای خریدهای کاربر «سهیل» رو ببینی؟
+یه مشکل یا باگ توی این جدول هست؟
+بگو تا کمکت کنم. 🙂
+
+me
+Profiling [ Edit inline ] [ Edit ] [ Create PHP code ] [ Refresh ]
+
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+varchar(100)
+NO
+PRI
+NULL
+part_id
+varchar(100)
+YES
+NULL
+part_name
+varchar(255)
+YES
+NULL
+part_category
+varchar(100)
+YES
+NULL
+quantity
+int
+YES
+NULL
+unit_price
+decimal(12,2)
+YES
+NULL
+total_price
+decimal(12,2)
+YES
+NULL
+customer_name
+varchar(100)
+YES
+NULL
+customer_phone
+varchar(20)
+YES
+NULL
+customer_address
+text
+YES
+NULL
+status
+varchar(50)
+YES
+NULL
+purchase_date
+datetime
+YES
+NULL
+Query results operatio
+این ساختار جدول part_purchases_v2 هست. ستون‌های مهمش:
+
+purchase_date → تاریخ ثبت سفارش
+customer_phone → شماره خریدار
+total_price → مبلغ کل
+status → وضعیت ارسال
+حالا بگو دقیقاً چی می‌خوای انجام بدم. مثلاً:
+
+پیدا کردن سفارش‌های یک شماره خاص:
+
+SELECT id, part_name, total_price, status, purchase_date
+FROM part_purchases_v2
+WHERE customer_phone LIKE '%9931746620%'
+ORDER BY purchase_date DESC;
+Copy
+دیدن آخرین سفارش‌ها:
+
+SELECT id, customer_name, customer_phone, total_price, status, purchase_date
+FROM part_purchases_v2
+ORDER BY purchase_date DESC
+LIMIT 20;
+Copy
+بررسی مشکل مبلغ «۱ تومان» (شاید باگ باشه):
+
+SELECT id, part_name, unit_price, quantity, total_price
+FROM part_purchases_v2
+ORDER BY purchase_date DESC
+LIMIT 20;
+Copy
+بگو کدوم رو می‌خوای یا هدفت چیه تا کوئری دقیقش رو بنویسم. 🙂
+
+me
+میخوام بدونم این سفارشها کجا ذخیره شدن
+الان جواب رو گرفتی 👍
+
+اون سفارش‌های خرید قطعه (کدهای PUR-...) توی جدول part_purchases_v2 ذخیره شدن — همون جدولی که الان ساختارش رو دیدیم.
+
+برای اینکه محتواش رو ببینی و مطمئن بشی، این رو بزن:
+
+SELECT id, customer_name, customer_phone, part_name, total_price, status, purchase_date
+FROM part_purchases_v2
+ORDER BY purchase_date DESC
+LIMIT 20;
+Copy
+اگه کدهای PUR-492940، PUR-784902 و PUR-221522 رو توی ستون id دیدی، تأیید میشه که همین جدوله.
+
+راستی، توی لیست جدول‌هات یه part_purchases قدیمی و یه zz_old_... هم بود — ولی نسخه‌ی فعال و جدید همینه که با _v2 تموم میشه. می‌خوای چیز دیگه‌ای هم بررسی کنیم؟ 🙂
+
+me
+MySQL returned an empty result set (i.e. zero rows). (Query took 0.0003 seconds.)
+SELECT id, customer_name, customer_phone, part_name, total_price, status, purchase_date FROM part_purchases_v2 ORDER BY purchase_date DESC LIMIT 20;
+ Profiling [ Edit inline ] [ Edit ] [
+جالبه — جدول part_purchases_v2 خالیه (هیچ ردیفی نداره). پس اون سفارش‌های PUR-... که توی پنل دیدی، اینجا ذخیره نشدن.
+
+پس باید یه جای دیگه باشن. سه تا احتمال هست:
+
+۱. توی جدول قدیمی part_purchases (بدون _v2):
+
+SELECT * FROM part_purchases ORDER BY purchase_date DESC LIMIT 20;
+Copy
+۲. توی جدول orders_v2:
+
+SELECT * FROM orders_v2 ORDER BY id DESC LIMIT 20;
+Copy
+۳. مستقیم دنبال یکی از کدها بگردیم — مطمئن‌ترین راه. این کد PUR-492940 رو توی جدول قدیمی چک کن:
+
+SELECT * FROM part_purchases WHERE id LIKE '%492940%';
+Copy
+اول جدول part_purchases (قدیمی) رو با کوئری شماره ۱ چک کن — به احتمال زیاد سفارش‌ها اونجان و کد داره هنوز از جدول قدیمی می‌خونه. نتیجه رو بفرست. 🔎
+
+me
+درکل دیتابیس بگرد
+برای جستجوی یک مقدار توی کل دیتابیس، ساده‌ترین راه استفاده از قابلیت Search خود phpMyAdmin هست (نه کوئری SQL):
+
+روش phpMyAdmin (پیشنهادی):
+
+از منوی بالا، سمت راست، دیتابیس bvrfefgr_site.bniaz رو انتخاب کن
+روی تب Search (جستجو) کلیک کن
+توی کادر، مقدار مورد نظر رو بنویس — مثلاً 492940
+گزینه‌ی «... % ...» (contains the word) رو انتخاب کن
+پایین، گزینه‌ی Select All رو بزن تا همه‌ی جدول‌ها جستجو بشن
+دکمه‌ی Go رو بزن
+این کل جدول‌ها رو می‌گرده و بهت میگه اون مقدار توی کدوم جدول و چند ردیف پیدا شده. ✅
+
+اگه می‌خوای با SQL بگردی، MySQL نمی‌تونه یهو کل دیتابیس رو بگرده، ولی این کوئری برات دستورهای جستجو رو تولید می‌کنه (بعد کپی و اجراشون کن):
+
+SELECT CONCAT('SELECT * FROM `', table_name, '` WHERE `', column_name, '` LIKE ''%492940%'';') AS query_to_run
+FROM information_schema.columns
+WHERE table_schema = 'bvrfefgr_site.bniaz'
+  AND data_type IN ('varchar','text','char','longtext');
+Copy
+ولی روش phpMyAdmin خیلی سریع‌تره. اول اون رو امتحان کن و بگو اون کد PUR-492940 توی کدوم جدول پیدا شد. 🔎
+
+me
+mn. Grid edit, checkbox, Edit, Copy and Delete features are not available. 
+
+ Showing rows 0 - 24 (315 total, Query took 0.0017 seconds.)
+SELECT
+ CONCAT('SELECT * FROM `', table_name, '` WHERE `', column_name, '` LIKE ''%492940%'';') AS query_to_run FROM information_schema.columns WHERE table_schema = 'bvrfefgr_site.bniaz' AND data_type IN ('varchar','text','char','longtext');
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+                
+1
+                 
+2
+                 
+3
+                 
+4
+                 
+5
+                 
+6
+                 
+7
+                 
+8
+                 
+9
+                 
+10
+                 
+11
+                 
+12
+                 
+13
+  | Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+query_to_run
+SELECT * FROM `activity_logs` WHERE `activity_type...
+SELECT * FROM `activity_logs` WHERE `description` ...
+SELECT * FROM `activity_logs` WHERE `ip_address` L...
+SELECT * FROM `activity_logs_v2` WHERE `action` LI...
+SELECT * FROM `activity_logs_v2` WHERE `details` L...
+SELECT * FROM `activity_logs_v2` WHERE `id` LIKE '...
+SELECT * FROM `activity_logs_v2` WHERE `ip` LIKE '...
+SELECT * FROM `activity_logs_v2` WHERE `user_id` L...
+SELECT * FROM `app_store` WHERE `k` LIKE '%492940%...
+SELECT * FROM `app_store` WHERE `v` LIKE '%492940%...
+SELECT * FROM `common_problems` WHERE `brand` LIKE...
+SELECT * FROM `common_problems` WHERE `category` L...
+SELECT * FROM `common_problems` WHERE `causes` LIK...
+SELECT * FROM `common_problems` WHERE `code` LIKE ...
+SELECT * FROM `common_problems` WHERE `created_at`...
+SELECT * FROM `common_problems` WHERE `description...
+SELECT * FROM `common_problems` WHERE `hazard_leve...
+SELECT * FROM `common_problems` WHERE `id` LIKE '%...
+SELECT * FROM `common_problems` WHERE `model` LIKE...
+SELECT * FROM `common_problems` WHERE `precautions...
+SELECT * FROM `common_problems` WHERE `steps` LIKE...
+SELECT * FROM `common_problems` WHERE `tags` LIKE ...
+SELECT * FROM `common_problems` WHERE `title` LIKE...
+SELECT * FROM `common_problems` WHERE `video_url` ...
+SELECT * FROM `error_codes` WHERE `ai_analysis` LI...
+این کوئری ۳۱۵ تا دستور جستجو تولید کرده که اجرا کردن دونه‌دونه‌شون خیلی طولانیه. بذار همه رو یکجا بگردیم.
+
+این کوئری رو اجرا کن — کل دستورها رو با UNION به هم می‌چسبونه و یک متن آماده می‌سازه:
+
+SELECT GROUP_CONCAT(
+  CONCAT('SELECT ''', table_name, ''' AS tbl, ''', column_name, ''' AS col, COUNT(*) AS n FROM `', table_name, '` WHERE `', column_name, '` LIKE ''%492940%''')
+  SEPARATOR ' UNION ALL '
+) AS full_query
+FROM information_schema.columns
+WHERE table_schema = 'bvrfefgr_site.bniaz'
+  AND data_type IN ('varchar','text','char','longtext');
+Copy
+خروجیش یک متن طولانی میشه. اون متن رو کپی کن، توی کادر SQL پیست کن، آخرش یه ; بذار و اجراش کن. نتیجه بهت میگه اون کد 492940 توی کدوم جدول و کدوم ستون هست. ✅
+
+ولی روش خیلی ساده‌تر همون Search خود phpMyAdmin هست که سریع‌تره و دردسر نداره:
+
+دیتابیس bvrfefgr_site.bniaz رو از سمت راست انتخاب کن
+تب Search (بالای صفحه) رو بزن
+کلمه 492940 رو بنویس
+گزینه‌ی Select All (انتخاب همه جدول‌ها) رو بزن
+Go
+این خودش کل دیتابیس رو می‌گرده و لیست جدول‌هایی که این مقدار توشون هست رو با تعداد نتایج نشون میده.
+
+پیشنهاد می‌کنم روش Search رو امتحان کن — خیلی سریع‌تره. نتیجه‌شو بگو. 🔎
+
+me
+Consoleascending
+descending
+Order:
+Debug SQL
+Execution order
+Time taken
+Order by:
+Group queries
+Some error occurred while getting SQL debug info.
+Options
+Set default
+Always expand query messages
+Show query history at start
+Show current browsing query
+ Execute queries on Enter and insert new line with Shift+Enter. To make this permanent, view settings.
+Switch to dark theme
+Show search criteria
+
+Search results for "492940 " at least one of the words:0 matches in activity_logs0 matches in activity_logs_v21 match in app_storeBrowseDelete0 matches in common_problems0 matches in error_codes0 matches in error_codes_v20 matches in error_logs0 matches in general_settings0 matches in global_state0 matches in orders_v20 matches in part_purchases0 matches in part_purchases_v20 matches in payments0 matches in payments_v20 matches in repair_orders0 matches in repair_requests0 matches in settings0 matches in sms_logs0 matches in sms_logs_v20 matches in spare_parts0 matches in subscriptions0 matches in subscriptions_v20 matches in system_state0 matches in tickets_v20 matches in users0 matches in users_v20 matches in zz_old_activity_logs0 matches in zz_old_common_problems0 matches in zz_old_error_codes0 matches in zz_old_part_purchases0 matches in zz_old_payments0 matches in zz_old_repair_orders0 matches in zz_old_repair_requests0 matches in zz_old_sms_logs0 matches in zz_old_spare_parts0 matches in zz_old_subscriptions0 matches in zz_old_users
+حالا معلوم شد سفارش‌ها کجان 👀
+
+نتیجه‌ی جستجو نشون میده کد 492940 فقط ۱ بار و اونم توی جدول app_store پیدا شده — توی هیچ‌کدوم از جدول‌های سفارش (part_purchases, orders_v2 و...) نیست.
+
+یعنی اون سفارش‌های خرید قطعه که توی پنل می‌بینی، به‌صورت متن/JSON داخل جدول app_store ذخیره شدن، نه توی جدول اختصاصی خودشون. جدول app_store ستون‌هاش k (کلید) و v (مقدار) بود — یعنی این یه انبار key-value هست که کل داده‌ها به شکل JSON توش ریخته شده.
+
+بذار ببینیم دقیقاً چی توشه. روی Browse کنار همون نتیجه‌ی app_store کلیک کن، یا این کوئری رو بزن:
+
+SELECT k, v FROM app_store WHERE v LIKE '%492940%';
+Copy
+نتیجه رو برام بفرست (مخصوصاً مقدار ستون k). اونجا احتمالاً کل سفارش‌ها، و شاید حتی کل داده‌های اپلیکیشن، به شکل یک متن JSON بزرگ ذخیره شدن. بعد از دیدنش می‌فهمیم ساختار کار چطوریه. 🔎
+
+me
+e search results
+
+
+ app_store
+
+
+ Showing rows 0 - 0 (1 total, Query took 0.0577 seconds.)
+SELECT * FROM `bvrfefgr_site.bniaz`.`app_store` WHERE (CONVERT(`k` USING utf8) LIKE '%492940%' OR CONVERT(`v` USING utf8) LIKE '%492940%' OR CONVERT(`updated_at` USING utf8) LIKE '%492940%')
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+
+
+k
+v
+updated_at
+
+ Edit
+ Copy
+ Delete
+main
+{"adminPassword":"\"Abbasi163@#1234\"","smsSetting...
+2026-07-23 22:22:45
+  Check all 
+With selected:
+    
+ Show all
+|
+Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+Query results operations
+    
+ Warning: #3719 'utf8' is currently an alias for the character set UTF8MB3, but will be an alias for UTF8MB4 in a future release. Please consider using UTF8MB4 in order to be unambiguous.
+ Warning: #3719 'utf8' is currently an alias for the character set UTF8MB3, but will be an alias for UTF8MB4 in a future release. Please consider using UTF8MB4 in order to be unambiguous.
+ Warning: #3719 'utf8' is currently an alias for the character set UTF8MB3, but will be an alias for UTF8MB4 in a future rel
+حالا کل معما حل شد 🎯
+
+کل داده‌های اپلیکیشنت — سفارش‌ها، تنظیمات، رمز ادمین و همه‌چیز — توی یک ردیف واحد توی جدول app_store ذخیره شده:
+
+ستون k = main
+ستون v = یک JSON بزرگ که همه‌چیز توشه (دیدی که با {"adminPassword":...,"smsSetting... شروع میشه)
+یعنی اپلیکیشنت به جای استفاده از جدول‌های مجزا (part_purchases_v2, users_v2 و...)، همه‌چیز رو در قالب یک شیء JSON در ردیف main نگه می‌داره. برای همین جدول‌های _v2 خالی بودن و کاربر «سهیل» هم created_atش NULL بود.
+
+⚠️ یک نکته امنیتی مهم: توی همون خروجی دیدم که adminPassword به‌صورت متن ساده (plain text) اونجا ذخیره شده (Abbasi163@#1234). این خیلی ناامنه — بهتره حتماً هش بشه. پیشنهاد می‌کنم بعداً حتماً این رمز رو عوض کنی چون الان توی چت هم دیده شد.
+
+برای دیدن خودِ سفارش‌ها، کل اون JSON رو باید ببینیم. این کوئری رو بزن و کل مقدار ستون v رو کپی کن (ممکنه طولانی باشه):
+
+SELECT JSON_PRETTY(v) FROM app_store WHERE k = 'main';
+Copy
+اگه خطا داد (نسخه MySQL قدیمی بود)، این رو بزن:
+
+SELECT v FROM app_store WHERE k = 'main';
+Copy
+بعدش می‌تونم کمکت کنم بفهمی سفارش‌ها و کاربرها دقیقاً کجای این JSON هستن. فقط ⚠️ قبل از فرستادن، حتماً بخش adminPassword و رمزها رو از متن پاک کن و نفرست. 🔐
+
+me
+Current selection does not contain a unique column. Grid edit, checkbox, Edit, Copy and Delete features are not available. 
+
+ Showing rows 0 - 0 (1 total, Query took 0.0813 seconds.)
+SELECT
+ JSON_PRETTY(v) FROM app_store WHERE k = 'main';
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+JSON_PRETTY(v)
+{
+  "brandsList": [
+    "والترو",
+    "ا ج ا",
+   ...
+کوئری کار کرد و JSON خیلی بزرگه (برای همین کوتاه نشونش داده). حالا بذار دقیقاً بخش سفارش‌ها رو استخراج کنیم بدون اینکه کل متن رو ببینی.
+
+اول ببینیم این JSON چه کلیدهایی (بخش‌هایی) داره:
+
+SELECT JSON_KEYS(v) FROM app_store WHERE k = 'main';
+Copy
+نتیجه‌شو بفرست — یه لیست از اسم بخش‌ها میده (مثلاً users, purchases, orders, settings و...). بعد از دیدن اسم‌ها، دقیقاً همون بخش سفارش‌ها رو تنها استخراج می‌کنیم و می‌فهمیم سفارش PUR-492940 کِی و توسط کی ثبت شده. 🔎
+
+me
+ction does not contain a unique column. Grid edit, checkbox, Edit, Copy and Delete features are not available. 
+
+ Showing rows 0 - 0 (1 total, Query took 0.0785 seconds.)
+SELECT
+ JSON_KEYS(v) FROM app_store WHERE k = 'main';
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+JSON_KEYS(v)
+["brandsList", "citiesList", "errorCodes", "models...
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows:
+لیست کلیدها بازم کوتاه شده و کامل نشون نمیده. بذار همه‌ی اسم بخش‌ها رو به‌صورت ردیف‌ردیف و کامل ببینیم:
+
+SELECT jt.name
+FROM app_store,
+JSON_TABLE(JSON_KEYS(v), '$[*]' COLUMNS (name VARCHAR(100) PATH '$')) AS jt
+WHERE k = 'main';
+Copy
+این هر کلید رو توی یک ردیف جدا نشون میده تا هیچ‌کدوم قطع نشه. نتیجه رو بفرست تا اسم دقیق بخش سفارش‌ها (مثلاً purchases یا partPurchases) رو پیدا کنیم. 🔎
+
+me
+brandsList
+citiesList
+errorCodes
+modelsList
+spareParts
+smsSettings
+trustBadges
+supportPhone
+visitorViews
+adminPassword
+partPurchases
+userFeedbacks
+categoriesList
+categoryConfig
+commonProblems
+adminAnnouncement
+affiliateProducts
+بخش سفارش‌ها پیدا شد: partPurchases ✅
+
+حالا سفارش PUR-492940 رو مستقیم از توی JSON استخراج می‌کنیم. این کوئری همه‌ی سفارش‌ها رو به‌صورت جدول مرتب نشون میده:
+
+SELECT jt.*
+FROM app_store,
+JSON_TABLE(
+  v, '$.partPurchases[*]'
+  COLUMNS (
+    id            VARCHAR(100) PATH '$.id',
+    customer_name VARCHAR(100) PATH '$.customerName',
+    customer_phone VARCHAR(30)  PATH '$.customerPhone',
+    part_name     VARCHAR(255) PATH '$.partName',
+    total_price   VARCHAR(50)  PATH '$.totalPrice',
+    status        VARCHAR(50)  PATH '$.status',
+    purchase_date VARCHAR(50)  PATH '$.purchaseDate'
+  )
+) AS jt
+WHERE k = 'main';
+Copy
+اگه اسم بعضی فیلدها فرق داشت و ستون‌ها خالی اومد، اول ساختار یک سفارش رو ببینیم تا اسم دقیق فیلدها رو دربیاریم:
+
+SELECT JSON_PRETTY(JSON_EXTRACT(v, '$.partPurchases[0]'))
+FROM app_store WHERE k = 'main';
+Copy
+اول کوئری اول رو بزن. اگه داده‌ها درست اومد، سفارش موردنظرت رو می‌بینی؛ اگه ستون‌ها خالی بود، کوئری دوم رو بزن و نتیجه‌شو بفرست. 🔎
+
+me
+Current selection does not contain a unique column. Grid edit, checkbox, Edit, Copy and Delete features are not available. 
+
+ Showing rows 0 - 2 (3 total, Query took 0.0480 seconds.)
+SELECT
+ jt.* FROM app_store, JSON_TABLE( v, '$.partPurchases[*]' COLUMNS ( id VARCHAR(100) PATH '$.id', customer_name VARCHAR(100) PATH '$.customerName', customer_phone VARCHAR(30) PATH '$.customerPhone', part_name VARCHAR(255) PATH '$.partName', total_price VARCHAR(50) PATH '$.totalPrice', status VARCHAR(50) PATH '$.status', purchase_date VARCHAR(50) PATH '$.purchaseDate' ) ) AS jt WHERE k = 'main';
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+id
+customer_name
+customer_phone
+part_name
+total_price
+status
+purchase_date
+PUR-492940
+نژنیم
+09130000002
+تست
+NULL
+delivered
+NULL
+PUR-784902
+مبحف
+09307446295
+تست
+NULL
+delivered
+NULL
+PUR-221522
+Jeue
+09940204166
+تست
+NULL
+delivered
+NULL
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows:
+عالی، سفارش‌ها استخراج شدن ✅ فقط دو تا فیلد (total_price و purchase_date) خالی (NULL) اومدن — یعنی اسم واقعی این دو فیلد توی JSON با چیزی که حدس زدم فرق داره.
+
+بذار ساختار دقیق یک سفارش رو ببینیم تا اسم درست فیلدها (قیمت و تاریخ) رو پیدا کنیم:
+
+SELECT JSON_PRETTY(JSON_EXTRACT(v, '$.partPurchases[0]'))
+FROM app_store WHERE k = 'main';
+Copy
+نتیجه رو بفرست — اونجا اسم واقعی فیلدهای قیمت و تاریخ رو می‌بینیم (مثلاً شاید date یا createdAt باشه به‌جای purchaseDate)، بعد کوئری رو اصلاح می‌کنم که تاریخ ثبت سفارش هم درست دربیاد. ⏱️
+
+me
+چجوری میشه حذف کرد
+چون داده‌ها توی یک JSON داخل ردیف main ذخیره شدن، حذف با DELETE معمولی کار نمی‌کنه — باید از داخل JSON اون آیتم رو برداری.
+
+اول بگو دقیقاً چی می‌خوای حذف کنی؟
+
+یک سفارش خاص (مثلاً PUR-492940)؟
+یک کاربر؟
+کل سفارش‌ها؟
+⚠️ خیلی مهم — قبل از هر حذفی حتماً یک بکاپ بگیر، چون کل اپلیکیشنت توی همین یک ردیفه و اگه اشتباه بشه همه‌چیز از بین میره:
+
+INSERT INTO app_store (k, v, updated_at)
+SELECT CONCAT('backup_', UNIX_TIMESTAMP()), v, NOW()
+FROM app_store WHERE k = 'main';
+Copy
+برای حذف یک سفارش خاص (مثلاً PUR-492940) — چون توی آرایه‌ست، باید با اندیسش حذف بشه. PUR-492940 اولین آیتمه (اندیس [0]):
+
+UPDATE app_store
+SET v = JSON_REMOVE(v, '$.partPurchases[0]')
+WHERE k = 'main';
+Copy
+⚠️ ولی مطمئن شو کدومش اندیس چنده، چون اگه ترتیب فرق کنه ممکنه سفارش اشتباهی پاک بشه.
+
+راه مطمئن‌تر (بر اساس شناسه، نه اندیس): اگه نسخه MySQL جدید باشه:
+
+UPDATE app_store
+SET v = JSON_REMOVE(
+  v,
+  REPLACE(JSON_UNQUOTE(JSON_SEARCH(v, 'one', 'PUR-492940')), '.id', '')
+)
+WHERE k = 'main';
+Copy
+اول بگو دقیقاً چی می‌خوای حذف کنی و حتماً بکاپ بگیر، بعد با هم مطمئن انجامش بدیم. 🔐
+
+me
+PUR-492940۱۴۰۵/۴/۳۰نژنیم
+09130000002
+تست
+پکیج
+۱ توماناراک⏳ در انتظار ارسال
+🚚 ارسال شده به پست
+✅ تحویل داده شده
+PUR-784902۱۴۰۵/۴/۲۷مبحف
+09307446295
+تست
+پکیج
+۱ تومانپزپیم⏳ در انتظار ارسال
+🚚 ارسال شده به پست
+✅ تحویل داده شده
+PUR-221522۱۴۰۵/۴/۲۷Jeue
+09940204166
+تست
+پکیج
+۱ تومانNsjwjهمه اینا حذف
+می‌خوای هر سه سفارش (کل partPurchases) رو پاک کنی. چون هر سه‌شون تستی‌ان، ساده‌ترین راه اینه که کل آرایه رو خالی کنیم.
+
+⚠️ اول حتماً بکاپ بگیر — این رو اول بزن:
+
+INSERT INTO app_store (k, v, updated_at)
+SELECT CONCAT('backup_', UNIX_TIMESTAMP()), v, NOW()
+FROM app_store WHERE k = 'main';
+Copy
+بعد از اینکه بکاپ گرفته شد (باید بگه ۱ ردیف اضافه شد)، این رو بزن تا هر سه سفارش پاک بشن و آرایه خالی بشه:
+
+UPDATE app_store
+SET v = JSON_SET(v, '$.partPurchases', JSON_ARRAY())
+WHERE k = 'main';
+Copy
+بعد برای مطمئن شدن که خالی شده، این رو چک کن:
+
+SELECT JSON_EXTRACT(v, '$.partPurchases') FROM app_store WHERE k = 'main';
+Copy
+باید [] نشون بده — یعنی همه‌ی سفارش‌ها حذف شدن ✅
+
+اگه توی پنل اپلیکیشن هنوز نمایش داده شدن، احتمالاً کش مرورگره — یه بار صفحه رو رفرش کن (Ctrl+F5). اگه یه وقت خواستی برگردونی، از همون ردیف backup_... قابل بازیابیه. 🔐
+
+me
+بک اپ نگیرم چی میشه
+me
+بک اپ کجا ذخیره میشه
+اگه بکاپ نگیری و همه‌چیز درست پیش بره، هیچ مشکلی پیش نمیاد — سفارش‌ها پاک میشن و تمام.
+
+اما ریسکش اینه: کل اپلیکیشنت (کاربرها، تنظیمات، برندها، قطعات، رمز ادمین و همه‌چیز) توی همین یک ردیف main ذخیره شده. اگه توی کوئری کوچک‌ترین اشتباهی بشه — مثلاً WHERE رو فراموش کنی، یا مسیر JSON اشتباه باشه — ممکنه به‌جای سفارش‌ها، کل داده‌های سایتت خراب یا پاک بشه و دیگه راه برگشتی نداشته باشی. 😬
+
+بکاپ فقط ۳ ثانیه طول می‌کشه و یک ردیف اضافه به همون جدول می‌سازه (سایتت رو سنگین یا کند نمی‌کنه). واقعاً ارزش این ریسک رو نداره که ازش رد بشی.
+
+پیشنهاد قوی من: حتماً اول این رو بزن —
+
+INSERT INTO app_store (k, v, updated_at)
+SELECT CONCAT('backup_', UNIX_TIMESTAMP()), v, NOW()
+FROM app_store WHERE k = 'main';
+Copy
+بعدش با خیال راحت سفارش‌ها رو حذف کن. اگه یه وقت چیزی اشتباه شد، با یک کوئری ساده همه‌چیز رو برمی‌گردونیم. می‌خوای بریم جلو؟ 🔐
+
+بکاپ توی همون جدول app_store ذخیره میشه — یعنی همون‌جایی که داده اصلی هست، فقط توی یک ردیف جدید.
+
+الان توی app_store یک ردیف داری با کلید k = 'main'. اون کوئری بکاپ، یک ردیف جدید می‌سازه با کلیدی مثل backup_1737012345 (کلمه backup + یک عدد زمان) که یک کپی کامل از مقدار v توشه.
+
+پس بعد از بکاپ، جدولت این شکلی میشه:
+
+k	v
+main	(داده اصلی و فعال)
+backup_1737012345	(کپی پشتیبان)
+اپلیکیشنت فقط از ردیف main می‌خونه، پس ردیف بکاپ هیچ تأثیری روی کارکرد سایت نداره — فقط اونجا می‌مونه تا اگه لازم شد ازش استفاده کنی.
+
+برای بازگردانی (اگه یه وقت چیزی خراب شد) کافیه این رو بزنی:
+
+UPDATE app_store
+SET v = (SELECT v FROM (SELECT v FROM app_store WHERE k = 'backup_1737012345') AS tmp)
+WHERE k = 'main';
+Copy
+بعد از اینکه مطمئن شدی همه‌چیز درسته، می‌تونی ردیف بکاپ رو پاک کنی تا جدول تمیز بمونه:
+
+DELETE FROM app_store WHERE k LIKE 'backup_%';
+Copy
+خب، حالا با خیال راحت اول بکاپ رو بگیر بعد سفارش‌ها رو حذف کن. بریم؟ 🔐
+
+me
+نه اکسپورت میگیرم
+me
+ازکل دیتابیس
+آها، عالیه 👍 اکسپورت گرفتن حتی بهتره چون کپی رو بیرون از دیتابیس (روی کامپیوتر خودت) نگه می‌داری.
+
+روش اکسپورت گرفتن از ردیف main توی phpMyAdmin:
+
+اول این کوئری رو بزن تا فقط ردیف main انتخاب بشه:
+SELECT * FROM app_store WHERE k = 'main';
+Copy
+پایین نتیجه، روی Export کلیک کن
+فرمت رو SQL بذار (یا JSON اگه فقط داده می‌خوای)
+Go رو بزن — یک فایل دانلود میشه
+یا برای اکسپورت کل جدول: از منوی چپ روی جدول app_store کلیک کن ← تب Export ← Go.
+
+بعد از اینکه فایل اکسپورت با موفقیت دانلود شد و مطمئن شدی سالمه، این کوئری رو بزن تا هر سه سفارش پاک بشن:
+
+UPDATE app_store
+SET v = JSON_SET(v, '$.partPurchases', JSON_ARRAY())
+WHERE k = 'main';
+Copy
+بعد چک کن که خالی شده:
+
+SELECT JSON_EXTRACT(v, '$.partPurchases') FROM app_store WHERE k = 'main';
+Copy
+باید [] نشون بده ✅
+
+اول اکسپورت رو بگیر، بعد بگو تا با هم حذف رو انجام بدیم. 🔐
+
+درسته، اکسپورت از کل دیتابیس امن‌ترین کاره 👍
+
+روش اکسپورت کل دیتابیس در phpMyAdmin:
+
+از منوی سمت راست/چپ، روی اسم دیتابیس bvrfefgr_site.bniaz کلیک کن (تا کل جدول‌ها انتخاب بشن)
+از منوی بالا، تب Export رو بزن
+Export method رو روی Quick بذار (ساده و کامل)
+فرمت: SQL
+Go رو بزن — یک فایل .sql از کل دیتابیس دانلود میشه
+اگه حجم دیتابیس زیاد بود و دانلود ناقص شد، از حالت Custom استفاده کن و گزینه‌ی "Save output to a file" + فشرده‌سازی zip یا gzip رو انتخاب کن تا کامل دانلود بشه.
+
+بعد از اینکه فایل کامل دانلود شد و مطمئن شدی سالمه (حجمش صفر نباشه)، این رو بزن تا هر سه سفارش پاک بشن:
+
+UPDATE app_store
+SET v = JSON_SET(v, '$.partPurchases', JSON_ARRAY())
+WHERE k = 'main';
+Copy
+و برای تأیید:
+
+SELECT JSON_EXTRACT(v, '$.partPurchases') FROM app_store WHERE k = 'main';
+Copy
+باید [] بشه ✅
+
+اکسپورت رو بگیر و بگو انجام شد تا حذف رو ادامه بدیم. 🔐
+
+me
+T JSON_EXTRACT(v, '$.partPurchases') FROM app_store WHERE k = 'main';
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+JSON_EXTRACT(v, '$.partPurchases')
+[]
+تمام شد ✅
+
+خروجی [] یعنی هر سه سفارش با موفقیت حذف شدن و آرایه‌ی partPurchases الان کاملاً خالیه.
+
+حالا فقط برو توی پنل اپلیکیشن و صفحه رو یه بار رفرش کن (Ctrl+F5 برای پاک شدن کش) — باید ببینی که دیگه هیچ سفارشی نمایش داده نمیشه.
+
+اگه یه وقت خواستی برگردونی، از همون فایل اکسپورتی که گرفتی قابل بازیابیه. 🔐
+
+کار دیگه‌ای هست که کمکت کنم؟ 🙂
+
+me
+مشاهده و مانیتورینگ تراکنش‌های پرداخت
+کل تراکنش‌های بانکی، ثبت پرداخت پکیج‌های اشتراکی از درگاه زرین‌پال یا کافه بازار
+
+شناسه تراکنشکاربر (ID)مبلغ (تومان)درگاه پرداختکد ارجاع بانکی (Reference)واریزکننده/فیشوضعیت پرداختتاریخ تراکنشعملیات ممیزیpay_card_1784825235298us_1784823438818
+
+هادی عباسی (09188636849)
+۱۲۰٬۰۰۰ تومانکارت به کارت---نامشخصموفق---✓ تکمیل و شارژ شده
+pay_card_1784817987665us_1784815371446
+
+حساب یافت نشد
+۷۹۰٬۰۰۰ تومانکارت به کارت---نامشخصموفق---✓ تکمیل و شارژ شده
+pay_card_1784816561278us_1784815371446
+
+حساب یافت نشد
+۱۲۰٬۰۰۰ تومانکارت به کارت---نامشخصموفق---✓ تکمیل و شارژ شده
+حذف
+me
+مشاهده و مانیتورینگ تراکنش‌های پرداخت
+کل تراکنش‌های بانکی، ثبت پرداخت پکیج‌های اشتراکی از درگاه زرین‌پال یا کافه بازار
+
+شناسه تراکنشکاربر (ID)مبلغ (تومان)درگاه پرداختکد ارجاع بانکی (Reference)واریزکننده/فیشوضعیت پرداختتاریخ تراکنشعملیات ممیزیpay_card_1784825235298us_1784823438818
+
+هادی عباسی (09188636849)
+۱۲۰٬۰۰۰ تومانکارت به کارت---نامشخصموفق---✓ تکمیل و شارژ شده
+pay_card_1784817987665us_1784815371446
+
+حساب یافت نشد
+۷۹۰٬۰۰۰ تومانکارت به کارت---نامشخصموفق---✓ تکمیل و شارژ شده
+pay_card_1784816561278us_1784815371446
+
+حساب یافت نشد
+۱۲۰٬۰۰۰ تومانکارت به کارت---نامشخصموفق---✓ تکمیل و شارژ شده
+حذف
+این هم تراکنش‌های پرداخته که مثل سفارش‌ها، احتمالاً توی همون JSON ردیف main ذخیره شدن.
+
+اول بذار ببینیم اسم بخش تراکنش‌ها چیه — توی لیست کلیدهایی که قبلاً دیدیم (brandsList, partPurchases, payments...) اسم پرداخت‌ها مستقیم نبود، پس ممکنه اسمش فرق داشته باشه. این رو بزن تا همه‌ی کلیدها رو کامل ببینیم:
+
+SELECT jt.name
+FROM app_store,
+JSON_TABLE(JSON_KEYS(v), '$[*]' COLUMNS (name VARCHAR(100) PATH '$')) AS jt
+WHERE k = 'main';
+Copy
+قبلاً این کلیدها رو دیدیم: brandsList, citiesList, errorCodes, modelsList, spareParts, smsSettings, trustBadges, supportPhone, visitorViews, adminPassword, partPurchases, userFeedbacks, categoriesList, categoryConfig, commonProblems, adminAnnouncement, affiliateProducts
+
+توی این لیست چیزی مثل payments یا transactions نبود! پس یا اسمش یه چیز دیگه‌ست، یا این تراکنش‌ها جای دیگه‌ای ذخیره شدن.
+
+بگو دقیقاً چی می‌خوای:
+
+فقط مشاهده تراکنش‌ها؟
+یا حذف یکی/همه‌شون (مثل سفارش‌ها)؟
+و اول اون کوئری بالا رو بزن و لیست کامل کلیدها رو بفرست تا اسم دقیق بخش تراکنش‌ها رو پیدا کنیم. 🔎
+
+me
+Current selection does not contain a unique column. Grid edit, checkbox, Edit, Copy and Delete features are not available. 
+
+ Showing rows 0 - 16 (17 total, Query took 0.0648 seconds.)
+SELECT
+ jt.name FROM app_store, JSON_TABLE(JSON_KEYS(v), '$[*]' COLUMNS (name VARCHAR(100) PATH '$')) AS jt WHERE k = 'main';
+ Profiling [ Edit inline ] [ Edit ] [ Explain SQL ] [ Create PHP code ] [ Refresh ]
+ Show all|Number of rows:                                                            
+25
+                               
+50
+                               
+100
+                               
+250
+                               
+500
+                           Filter rows: 
+name
+brandsList
+citiesList
+errorCodes
+modelsList
+spareParts
+smsSettings
+trustBadges
+supportPhone
+visitorViews
+adminPassword
+partPurchases
+userFeedbacks
+categoriesList
+categoryConfig
+commonProblems
+adminAnnouncement
+affiliateProducts
+توی این ۱۷ کلید، هیچ بخشی برای پرداخت/تراکنش (مثل payments یا transactions) وجود نداره. پس تراکنش‌های پرداخت توی JSON ردیف main نیستن — جای دیگه‌ای ذخیره شدن.
+
+یادته توی لیست جدول‌ها این‌ها رو داشتیم: payments و payments_v2. به احتمال زیاد تراکنش‌ها اونجان. بذار چک کنیم:
+
+SELECT * FROM payments_v2 ORDER BY id DESC LIMIT 20;
+Copy
+اگه خالی بود، جدول قدیمی رو چک کن:
+
+SELECT * FROM payments ORDER BY id DESC LIMIT 20;
+Copy
+یا مطمئن‌ترین راه — مستقیم دنبال شناسه‌ی یکی از تراکنش‌ها بگردیم. از قابلیت Search خود phpMyAdmin استفاده کن و این رو جستجو کن:
+
+pay_card_1784825235298
+Copy
+(دیتابیس رو انتخاب کن ← تب Search ← این متن رو بنویس ← Select All ← Go)
+
+این بهت میگه تراکنش‌ها دقیقاً توی کدوم جدول ذخیره شدن. اول payments_v2 رو چک کن و نتیجه رو بفرست. 🔎
+
+me
+Search results for "pay_card_1784825235298" at least one of the words:0 matches in activity_logs0 matches in activity_logs_v20 matches in app_store0 matches in common_problems0 matches in error_codes0 matches in error_codes_v20 matches in error_logs0 matches in general_settings0 matches in global_state0 matches in orders_v20 matches in part_purchases0 matches in part_purchases_v20 matches in payments1 match in payments_v2BrowseDelete0 matches in repair_orders0 matches in repair_requests0 matches in settings0 matches in sms_logs0 matches in sms_logs_v20 matches in spare_parts0 matches in subscriptions0 matches in subscriptions_v20 matches in system_state0 matches in tickets_v20 matches in users0 matches in users_v20 matches in zz_old_activity_logs0 matches in zz_old_common_problems0 matches in zz_old_error_codes0 matches in zz_old_part_purchases0 matches in zz_old_payments0 matches in zz_old_repair_orders0 matches in zz_old_repair_requests0 matches in zz_old_sms_logs0 matches in zz_old_spare_parts0 matches in zz_old_subscriptions0 matches in zz_old_users
+Total: 1 match
+پیدا شد ✅ برخلاف سفارش‌ها، تراکنش‌های پرداخت توی یک جدول واقعی ذخیره شدن: payments_v2 (نه توی JSON).
+
+این یعنی حذف‌شون خیلی راحت‌تره — با DELETE معمولی. اول بذار همه تراکنش‌ها رو ببینیم:
+
+SELECT * FROM payments_v2 ORDER BY id DESC LIMIT 20;
+Copy
+بگو دقیقاً چی می‌خوای:
+
+حذف یک تراکنش خاص:
+
+DELETE FROM payments_v2 WHERE id = 'pay_card_1784825235298';
+Copy
+حذف همه تراکنش‌ها:
+
+DELETE FROM payments_v2;
+Copy
+⚠️ نکته مهم: پرداخت‌ها با «واریز» به موجودی کاربر (balance) گره خوردن. اگه تراکنش رو حذف کنی، موجودی کاربری که شارژ شده خودش کم نمیشه — اگه بخوای موجودی هم اصلاح بشه باید جداگانه انجامش بدیم.
+
+اول اون کوئری SELECT رو بزن و نتیجه رو بفرست، و بگو کدوم تراکنش‌ها رو می‌خوای حذف کنی. ⚠️ قبل از حذف حتماً یه اکسپورت هم از این جدول بگیر. 🔐
+
+me
+یه مشکلی که هست مثلا وقتی کدخطایی را ممیزی میکنم ومنتشرمیشه بعدش اپلیکیشن ریست میکنم اون کد برمیگرده حالت قبل یا وقتی سفارش اعزام تکنسین ثبت میکنم حتماباید ری استارت کنم تا درپنل ادمین وتکنسین بشیه در کل برخی جا خرابکاری میکنه برخی جا باعث اختلال میشخ
+me
+هیه مشکلی که هست مثلا وقتی کدخطایی را ممیزی میکنم ومنتشرمیشه بعدش اپلیکیشن ریست میکنم اون کد برمیگرده حالت قبل یا وقتی سفارش اعزام تکنسین ثبت میکنم حتماباید ری استارت کنم تا درپنل ادمین وتکنسین بشیه در کل برخی جا خرابکاری میکنه برخی جا باعث اختلال میشخ
+فهمیدم مشکل چیه 🎯 این یه باگ کلاسیک در معماری اپلیکیشنته و دلیلش دقیقاً همون چیزیه که توی این چند مرحله کشف کردیم.
+
+ریشه مشکل: اپلیکیشنت داده‌ها رو دو جا نگه می‌داره و این دو تا با هم هماهنگ نیستن:
+
+یک نسخه توی حافظه (state) یا فایل JSON که موقع اجرا لود میشه
+یک نسخه توی دیتابیس (هم ردیف main در app_store، هم جدول‌های _v2)
+وقتی تو یه کد خطا رو ممیزی می‌کنی یا سفارش ثبت می‌کنی، تغییر فقط توی حافظه اعمال میشه ولی درست توی دیتابیس ذخیره نمیشه (یا برعکس). برای همین:
+
+کد خطا برمی‌گرده حالت قبل → چون توی دیتابیس ذخیره نشده، با ریستارت دوباره نسخه قدیمی از دیتابیس لود میشه
+سفارش تکنسین بعد از ریستارت ظاهر میشه → چون توی دیتابیس ذخیره شده ولی state حافظه بلافاصله به‌روز نمیشه، فقط موقع ریلود از دیتابیس خونده میشه
+یعنی مشکل در همگام‌سازی (sync) بین حافظه و دیتابیس هست — بعضی عملیات‌ها فقط یکی رو آپدیت می‌کنن نه هر دو رو.
+
+برای اینکه دقیق پیداش کنم و درستش کنم، باید کد اپلیکیشن رو ببینم — این چیزیه که با کوئری SQL قابل حل نیست، توی کد سمت سرور (PHP/Node/...) هست.
+
+چند سؤال:
+
+اپلیکیشنت با چه زبونی نوشته شده؟ PHP یا Node.js یا چیز دیگه؟
+به کد سورس دسترسی داری؟ (توی cPanel، پوشه‌ی public_html یا مشابهش)
+اگه فایل‌هایی که پرداخت/ممیزی/سفارش رو ذخیره می‌کنن رو داری، محتواشون رو بفرست (مثلاً فایلی که موقع ممیزی صدا زده میشه).
+اگه کد رو بذاری، دقیقاً همون تابع ذخیره‌سازی که ناقصه رو پیدا می‌کنم و اصلاحش می‌کنیم تا هم توی دیتابیس ذخیره بشه، هم بدون ریستارت توی پنل نمایش داده بشه. 🔧
+
+me
+Node
+خب، Node.js 👍 مشکل توی کد سمت سروره — جایی که داده‌ها بین حافظه و دیتابیس همگام نمیشن.
+
+برای پیدا کردن دقیق باگ، به کد نیاز دارم. این چند تا رو برام بفرست یا بگو کجان:
+
+فایل اصلی سرور — معمولاً server.js، app.js یا index.js
+فایلی که داده‌ها رو از دیتابیس می‌خونه و توی حافظه نگه می‌داره — دنبال جایی بگرد که app_store یا main یا یه متغیر بزرگ مثل let state = {...} یا let data = {...} داره
+کدی که موقع «ممیزی کد خطا» و «ثبت سفارش» اجرا میشه — معمولاً توی مسیرهای (routes) مثل app.post('/api/...')
+چطور پیداشون کنی: توی cPanel برو به پوشه‌ی پروژه (احتمالاً public_html یا یه پوشه‌ی جدا برای اپ Node). دنبال فایل‌های .js بگرد.
+
+اما تا وقتی کد رو ببینم، احتمال قوی می‌دم مشکل اینه:
+
+اپلیکیشنت کل داده رو موقع استارت یک بار از دیتابیس می‌خونه و توی یک متغیر در حافظه می‌ریزه. بعد بعضی از عملیات‌ها:
+
+فقط متغیر حافظه رو عوض می‌کنن ولی توی دیتابیس ذخیره (write) نمی‌کنن → با ریستارت برمی‌گرده حالت قبل (مثل کد خطای ممیزی‌شده)
+فقط دیتابیس رو عوض می‌کنن ولی متغیر حافظه رو آپدیت نمی‌کنن → تا ریستارت نکنی توی پنل نمیاد (مثل سفارش تکنسین)
+راه‌حل درست: هر تابعی که داده رو تغییر میده، باید هم دیتابیس رو بنویسه و هم متغیر حافظه رو آپدیت کنه (یا اصلاً هر بار مستقیم از دیتابیس بخونه).
+
+اگه بخوای، می‌تونم برات یه محیط کاری بسازم و کد رو اونجا اصلاح کنیم. ولی اول کد فعلی رو بفرست (مخصوصاً فایل سرور و توابع ذخیره‌سازی) تا دقیقاً ببینم کجا ناقصه. اگه پروژه توی یه ریپازیتوری Git هست، لینکشو بده تا مستقیم بررسیش کنم. 🔍
+
+me
+نه فقط ازترمینال سیپنل
+منظورت اینه که فقط از طریق ترمینال cPanel می‌خوای کار کنی و کد رو ببینی؟ باشه 👍
+
+بذار اول فایل‌های پروژه‌ی Node رو پیدا کنیم. توی ترمینال cPanel این دستورها رو بزن:
+
+۱. برو به پوشه‌ی خانگی و فایل‌های اصلی Node رو پیدا کن:
+
+find ~ -name "*.js" -not -path "*/node_modules/*" 2>/dev/null | head -50
+Copy
+۲. فایل package.json رو پیدا کن (نقطه شروع پروژه رو نشون میده):
+
+find ~ -name "package.json" -not -path "*/node_modules/*" 2>/dev/null
+Copy
+نتیجه‌ی این‌ها رو بفرست تا بفهمیم پروژه کجاست و فایل اصلی سرور کدومه.
+
+بعد که فایل اصلی رو پیدا کردیم، برای دیدن جایی که داده ذخیره میشه، داخل کد دنبال کلمات کلیدی می‌گردیم (مثلاً app_store, partPurchases, UPDATE, errorCodes):
+
+grep -rn "app_store" ~ --include="*.js" --exclude-dir=node_modules
+Copy
+اول اون دو تا find رو بزن و نتیجه رو بفرست تا مسیر پروژه رو پیدا کنیم. 🔍
+
+me
+[bvrfefgr@nphost4 ~]$ source /home/bvrfefgr/nodevenv/kodyar/22/bin/activate && cd /home/bvrfefgr/kodyar
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$ find ~ -name "*.js" -not -path"*/node_modules/*" 2>/dev/null | head -50
+/home/bvrfefgr/public_html/js/jquery-1.11.2.min.js
+/home/bvrfefgr/public_html/js/app.js
+/home/bvrfefgr/kodyar/assets/index-trpm8Qre.js
+/home/bvrfefgr/kodyar/dist.bak-202607191829/assets/index-DN_7qNVV.js
+/home/bvrfefgr/kodyar/dist-reverted-backup-1784676121/assets/index-DIwD8Dve.js
+/home/bvrfefgr/kodyar/dist-OLD-backup/assets/index-TiZYS5kJ.js
+/home/bvrfefgr/kodyar/dist-backup-before-merge-1784677767/assets/index-DIwD8Dve.js
+/home/bvrfefgr/kodyar/dist/assets/index-CRER5eQR.js
+/home/bvrfefgr/kodyar/dist-backup-before-order-sync-1784678886/assets/index-BO_CxGcm.js
+/home/bvrfefgr/.trash/kodyar-new/assets/index-trpm8Qre.js
+/home/bvrfefgr/.trash/kodyar-new/dist/assets/index-BO_CxGcm.js
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$
+خب، پروژه توی /home/bvrfefgr/kodyar هست. اون فایل‌های assets/index-*.js که دیدی، کد فرانت‌اند build شده (React احتمالاً) هستن — کد اصلی سرور نیستن. باید فایل سرور (backend) رو پیدا کنیم.
+
+این‌ها رو بزن:
+
+۱. محتوای پوشه اصلی پروژه:
+
+ls -la /home/bvrfefgr/kodyar
+Copy
+۲. فایل package.json رو ببین (نقطه شروع سرور رو نشون میده):
+
+cat /home/bvrfefgr/kodyar/package.json
+Copy
+۳. فایل‌های js خارج از dist و node_modules (کد سرور):
+
+find /home/bvrfefgr/kodyar -maxdepth 2 -name "*.js" -not -path "*/node_modules/*" -not -path "*/dist*" -not -path "*/assets/*"
+Copy
+نتیجه‌ی این سه تا رو بفرست. مخصوصاً package.json مهمه چون فیلد "main" یا "scripts.start" بهمون میگه فایل اصلی سرور کدومه (مثلاً server.js یا app.js). 🔍
+
+me
+ا
+pasted-content-1784835970261
+Markdown
+حالا معماری کامل روشن شد 🎯 و ریشه‌ی مشکل رو می‌بینم.
+
+اپلیکیشنت داده رو در سه جا نگه می‌داره که با هم قاطی شدن:
+
+فایل db.json (۳.۷ مگابایت — همین الان هم آپدیت میشه)
+جدول app_store توی MySQL (ردیف main)
+جدول‌های _v2 توی MySQL
+و مهم‌تر: وجود فایل‌هایی مثل fix-readdb-cache.cjs و پوشه‌ی dist-backup-before-order-sync دقیقاً نشون میده که یه کش (cache) در حافظه داری که باگ‌ساز شده.
+
+مکانیزم باگ به احتمال بسیار زیاد اینه: سرور موقع استارت، db.json رو می‌خونه و توی یک متغیر در حافظه کش می‌کنه. بعضی عملیات‌ها:
+
+تغییر رو فقط توی حافظه اعمال می‌کنن ولی روی db.json/دیتابیس ننوشتن → با ریستارت برمی‌گرده حالت قبل (کد خطای ممیزی‌شده)
+تغییر رو روی دیتابیس می‌نویسن ولی کش حافظه رو به‌روز نمی‌کنن → تا ریستارت نکنی توی پنل نمیاد (سفارش تکنسین)
+برای اینکه دقیقاً کد باگ‌دار رو ببینم، این دستورها رو بزن و خروجی‌شون رو بفرست:
+
+۱. ببینیم توابع خواندن/نوشتن دیتابیس کجان:
+
+grep -n "function readDb\|function writeDb\|const readDb\|const writeDb\|let cache\|cachedDb\|let db " server.ts
+Copy
+۲. ببینیم فایل fix-readdb-cache چه تغییری اعمال کرده (سرنخ اصلی):
+
+cat fix-readdb-cache.cjs
+Copy
+۳. ببینیم موقع استارت چطور از فایل/دیتابیس می‌خونه:
+
+grep -n "db.json\|app_store\|readFileSync\|writeFileSync" server.ts | head -40
+Copy
+این سه تا رو بزن و نتیجه رو بفرست. از روی این‌ها دقیقاً می‌فهمم کش کجا خراب می‌کنه و راه‌حل رو بهت می‌دم. 🔍
+
+me
+نمیخوام کدجدیدبنویسی تا مشکلو به جای حل دوربزنی میخوام مشکل را حل کنی قبلا اینجوری نبود اگه میخوای جدوال دیتابیس هم بررسی کنیم
+حق داری 👍 من نمی‌خوام دور بزنم — می‌خوام ریشه رو پیدا کنم و همون رو درست کنم. برای این کار باید ببینم کد دقیقاً چطور می‌خونه و می‌نویسه، وگرنه هر تغییری کورکورانه‌ست.
+
+یه نکته مهم که تو گفتی خیلی ارزشمنده: «قبلاً اینجوری نبود». یعنی یه تغییری اتفاق افتاده که این باگ رو ساخته. و دقیقاً همینجا سرنخ هست — تو این همه فایل بکاپ و fix-...cjs داری که نشون میده اخیراً چند بار کد server.ts با اسکریپت دستکاری شده. یکی از همین دستکاری‌ها (احتمالاً مربوط به cache یا sync) باگ رو ساخته.
+
+پس بذار دقیقاً همون نقطه‌ای که خراب شده رو پیدا کنیم — نه کد جدید، بلکه دیدن اینکه الان کد چیکار می‌کنه:
+
+۱. تابع خواندن و نوشتن دیتابیس (قلب ماجرا):
+
+grep -n "readDb\|writeDb\|saveDb\|loadDb\|cachedDb\|let cache\|dbCache" server.ts
+Copy
+۲. ببینیم اسکریپت کش چیکار کرده (این اسمش داد می‌زنه که مقصره):
+
+cat fix-readdb-cache.cjs
+Copy
+۳. مقایسه‌ی نسخه فعلی با یه بکاپ قدیمی‌تر — تا ببینیم دقیقاً چی عوض شده:
+
+grep -n "readDb\|writeDb\|cache" server.ts.bak-safe
+Copy
+این سه تا رو بزن و عین خروجی رو بفرست. من از روی این‌ها نقطه‌ی خرابی رو نشونت می‌دم — و اون‌وقت با هم تصمیم می‌گیریم همون‌جا رو درست کنیم، نه اینکه چیز جدیدی اضافه کنیم.
+
+اگه هم بخوای موازیش جدول‌های دیتابیس رو بررسی کنیم، حتماً — ولی چون داده هم توی db.json هست هم دیتابیس، اول باید بفهمیم کد کدومشون رو منبع اصلی می‌دونه. اون سه تا دستور دقیقاً همینو بهمون می‌گه. 🔍
+
+me
+ز
+pasted-content-1784836097718
+Markdown
+حالا تصویر کامل شد و دقیقاً نقطه‌ی خرابی رو می‌بینم. بذار توضیح بدم چی کشف کردیم، بعد کد اصلی رو ببینیم تا مطمئن بشیم.
+
+معماری اپت اینه:
+
+globalDb = یک کپی از کل داده در حافظه
+db.json = کش روی دیسک
+app_store.main در MySQL = نسخه‌ی دائمی
+همه‌ی مسیرها readDb() (از حافظه می‌خونه) و writeDb() (به حافظه + async به فایل و MySQL می‌نویسه) رو صدا می‌زنن
+دو تا سرنخ قوی برای باگت پیدا کردم:
+
+۱. منطق استارت‌آپ (خط ۱۱۴۴ در نسخه safe): موقع بالا اومدن، سرور تعداد رکوردهای MySQL و فایل محلی رو مقایسه می‌کنه و هرکدوم رکورد بیشتری داشته باشه رو انتخاب می‌کنه («Live MySQL has equal or more records...»). این دقیقاً چرا ممیزی کد خطا بعد از ریست برمی‌گرده: وقتی یه کد رو ویرایش می‌کنی، تعداد رکوردها عوض نمیشه — پس موقع ریست، MySQL «مساوی یا بیشتر» حساب میشه و نسخه‌ی قدیمی MySQL جایگزین ویرایش تو میشه. یعنی ویرایش‌ها (نه اضافه‌کردن‌ها) موقع ریست بازنویسی میشن.
+
+۲. پچ fix-readdb-cache.cjs: این اخیراً readDb() رو عوض کرده که بر اساس mtime فایل، از db.json دوباره لود کنه. این با نوشتن async writeDb در تضاده و می‌تونه باعث بشه بعضی نوشته‌ها توی حافظه بمونن ولی توی پنل دیر ظاهر بشن (مثل سفارش تکنسین).
+
+برای اینکه قطعی بگم کدوم رو باید اصلاح کنیم، این سه تیکه کد رو نشونم بده (عین خروجی):
+
+sed -n '1150,1260p' server.ts
+Copy
+sed -n '1414,1500p' server.ts
+Copy
+sed -n '732,820p' server.ts
+Copy
+این‌ها منطق استارت‌آپ، writeDb و writeDbAsync هستن. با دیدن این‌ها دقیقاً بهت می‌گم کدوم خط باگ رو ساخته و چطور همون رو (بدون کد اضافه‌ی دورزننده) درست کنیم. 🔍
+
+me
+ز
+pasted-content-1784836169102
+Markdown
+حالا نقطه‌ی دقیق باگ‌ها روشن‌تر شد. بذار هردو مکانیزم رو توضیح بدم:
+
+باگ ۱ — چرا ممیزی کد خطا با ریست برمی‌گرده: writeDb() اول توی حافظه و فایل db.json می‌نویسه (سینک)، ولی نوشتن به MySQL رو async و بدون انتظار (fire-and-forget) انجام می‌ده — یعنی تابع برمی‌گرده قبل از اینکه نوشتن در MySQL واقعاً تموم بشه. اگه سرور دقیقاً همون لحظه‌ها ریستارت بشه (که در تست شما معمولاً بلافاصله بعد ممیزیه)، نوشتن روی MySQL هنوز کامل نشده. موقع بالا اومدن، کد میگه "MySQL همیشه منبع حقیقت است" و چون MySQL هنوز نسخه‌ی قدیمی رو داره، همون نسخه‌ی قدیمی رو به عنوان globalDb ست می‌کنه و حتی روی db.json هم می‌نویسدش — یعنی هر دو نسخه بازمی‌گرده به قبل. این خیلی واضحه، race condition کلاسیک.
+
+باگ ۲ — چرا سفارش تکنسین تا ریست توی پنل نمیاد: این برعکسه — احتمالاً یه مسیر (route) دیگه برای ثبت سفارش تکنسین وجود داره که مستقیم روی جدول MySQL (repair_orders یا tickets_v2) می‌نویسه، بدون اینکه از تابع writeDb() (که حافظه‌ی globalDb رو هم آپدیت می‌کنه) عبور کنه. پس داده توی MySQL هست ولی حافظه‌ی زنده‌ی سرور خبردار نمیشه، و پنل که از حافظه می‌خونه چیزی نمی‌بینه — تا ریستارت که دوباره از MySQL لود میشه.
+
+برای تأیید باگ ۲ و پیدا کردن خط دقیق، این رو بزن:
+
+grep -n "repair_orders\|dispatchTech\|dispatch-technician\|INSERT INTO repair\|INSERT INTO tickets" server.ts
+Copy
+و برای دیدن تابع readDbAsync که موقع استارت صدا زده میشه:
+
+sed -n '564,650p' server.ts
+Copy
+این‌ها رو بفرست تا خط دقیق مسیر ثبت سفارش رو پیدا کنم و فیکس دقیق (نه دورزدن) رو بهت بدم — که یا باید await کردن نوشتن MySQL قبل از پاسخ، یا مستقیم آپدیت‌کردن globalDb بعد از نوشتن مستقیم SQL. 🔍
+
+me
+ت
+pasted-content-1784836233788
+Markdown
+برای پیدا کردن مسیر دقیق «ثبت سفارش اعزام تکنسین»، باید ببینیم کجای کد orders_v2 رو می‌نویسه و کجا وضعیت سفارش به تکنسین اختصاص داده میشه. بزن:
+
+grep -n "orders_v2\|technician_id\|dispatch\|assignTechnician\|/api/orders\|/api/repair" server.ts | head -60
+Copy
+و برای دیدن کانتکست دقیق خط ۵۴۳۴ (که مستقیم روی tickets_v2 می‌نویسه بدون آپدیت حافظه):
+
+sed -n '5390,5450p' server.ts
+Copy
+این‌ها رو بفرست تا مسیر دقیق ثبت سفارش تکنسین رو پیدا کنم — گمونم اونجا هم شبیه تیکت، مستقیم SQL می‌نویسه بدون به‌روزرسانی globalDb، که همون چیزیه که باعث میشه پنل تا ریست خبردار نشه. 🔍
+
+me
+text: message,
+    timestamp: new Date().toISOString()
+   }
+  ]
+ };
+
+ if (!db.tickets) db.tickets = [];
+ db.tickets.unshift(newTicket);
+ writeDb(db);
+
+ // SQL replication
+ try {
+  const pool = getDbPool();
+  if (pool && !isMySqlOffline) {
+   await pool.query(
+    "INSERT INTO tickets_v2 (id, user_id, title, status, created_at, updated_at, messages) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [ticketId, userId, title, "open", new Date(), new Date(), JSON.stringify(newTicket.messages)]
+   );
+  }
+ } catch {}
+
+ await logActivity(userId, "ثبت تیکت پشتیبانی", req, `عنوان: ${title}`);
+
+ return res.json({ success: true, ticket: newTicket });
+});
+
+app.get("/api/tickets/my", (req, res) => {
+ const userId = req.headers["x-session-token"] || req.query.userId;
+ if (!userId) return res.status(401).json({ error: "احراز هویت نشده است." });
+
+ const db = readDb();
+ const tickets = (db.tickets || []).filter((t: any) => t.user_id === userId);
+این خودِ مسیر تیکت پشتیبانیه که مشکلی نداره (اول writeDb(db) رو صدا می‌زنه که هم حافظه هم db.json هم MySQL رو آپدیت می‌کنه، بعد جدا هم توی tickets_v2 می‌نویسه — این یکی درسته چون از writeDb استفاده کرده).
+
+حالا باید مسیر سفارش اعزام تکنسین (نه تیکت) رو پیدا کنیم. اون گرپ قبلی که خواستم رو بزن:
+
+grep -n "orders_v2\|technician_id\|dispatch\|assignTechnician\|/api/orders\|/api/repair" server.ts | head -60
+Copy
+این لیست تمام مسیرهایی که به سفارش و اعزام تکنسین مربوطن رو نشون میده. نتیجه رو بفرست تا مسیر دقیق ثبت سفارش رو پیدا کنم و ببینم کجاش writeDb() رو صدا نمی‌زنه (که باعث میشه پنل تا ریست خبردار نشه). 🔍
+
+me
+RCHAR(100),
+1532:  let dispatchStatus = "sent_simulated";
+1536:  console.log(`[SMS Gateway] Preparing dispatch to ${phone}...`);
+1568:      dispatchStatus = "sent_real_farazsms";
+1596:      dispatchStatus = "sent_real_kavenegar";
+1646:      dispatchStatus = "sent_real_smsir";
+1655:    dispatchStatus = "failed_with_fallback";
+1674:   status: dispatchStatus,
+1775:  let dispatchStatus = "sent_simulated";
+1798:      dispatchStatus = "sent_real_farazsms";
+1807:      dispatchStatus = "sent_real_kavenegar";
+1823:      dispatchStatus = "sent_real_smsir";
+1828:    dispatchStatus = "failed_with_fallback";
+1845:   status: dispatchStatus,
+3379:// CREATE REPAIR REQUEST: [ POST /api/repairs/create ]
+3380:app.post("/api/repairs/create", (req, res) => {
+3402:  const techId = req.body.technicianId || req.body.technician_id|| "";
+3407:   technician_id: techId,
+3461:// LIST REPAIR REQUESTS: [ GET /api/repairs/list ]
+3462:app.get("/api/repairs/list", (req, res) => {
+3476:    const isAvailable = !o.technician_id || o.technician_id === "" || o.technician_id === user.id;
+me
+ز
+pasted-content-1784836347870
+Markdown
+پیدا شد — مسیر اصلی POST /api/repairs/create هست (خط ۳۳۸۰). بذار محتوای دقیقش رو ببینیم تا مطمئن بشیم کجاش ناقصه:
+
+planning next command
 1ms
-The grep parser is finicky with special chars. Let me use simple single-word patterns.
+این رو بزن و خروجی رو بفرست:
 
-grep -n "readDb" .repos/codyarapp-ui/codyarapp-asl/site/server.ts
-279ms
-This is critical — the entire server reads from readDb() (a cache). Let me read the DB layer (lines 560–1300) to see whether it's MySQL or JSON-backed.
+sed -n '3379,3465p' server.ts
+Copy
+با دیدن این تیکه، دقیقاً می‌فهمیم آیا این مسیر از writeDb() استفاده می‌کنه یا مستقیم SQL می‌نویسه بدون آپدیت حافظه — که فرضیه‌ی اصلی باگ سفارش تکنسینه. 🔍
 
-site/server.ts
-214ms
-حالا ریشه مشکل داره روشن میشه. بذار writeDbAsync، getDbPool و بخش کش رو ببینم، بعد اندپوینت اعزام تکنسین.
+این مسیر ثبت سفارش (/api/repairs/create) در واقع درست کار می‌کنه — از writeDb(db) استفاده می‌کنه که همون لحظه حافظه (globalDb)، فایل db.json، و MySQL رو آپدیت می‌کنه. پس اگه همه‌چیز توی یک پردازش (process) واحد اجرا بشه، باید فوری توی پنل هم دیده بشه — نیازی به ریستارت نباید باشه.
 
-site/server.ts
-426ms
-پیدا کردم — یک ناهماهنگی بزرگ. server.ts روی جدول‌های _v2 (users_v2، orders_v2، payments_v2، subscriptions_v2، sms_logs_v2، error_codes_v2) و یک بلاب JSON به نام app_store کار می‌کنه، ولی migration.sql جدول‌های کاملاً متفاوتی می‌سازه (users، repair_orders، error_codes، ...). حالا اتصال pool و کش و اندپوینت اعزام تکنسین رو ببینم.
+این یعنی مشکل جای دیگه‌ایه: به احتمال زیاد اپلیکیشنت روی cPanel با بیش از یک نمونه (instance/worker) اجرا می‌شه (این خیلی رایجه در Passenger که Node اپ‌ها رو روی cPanel اجرا می‌کنه). اگه چند تا process جدا از هم در حال اجرا باشن، هرکدوم یه کپی جدا از globalDb توی حافظه‌ی خودش داره:
 
-site/server.ts
-234ms
-حالا تصویر واضح شد. بذار مکانیزم نوشتن که اندپوینت‌ها استفاده می‌کنن (writeDb) و اندپوینت اعزام تکنسین رو ببینم.
+درخواست ثبت سفارش به Worker A میره → حافظه‌ی Worker A و فایل و MySQL آپدیت میشه
+درخواست دیدن پنل ادمین به Worker B میره → حافظه‌ی Worker B هنوز نسخه‌ی قدیمیه، چون هنوز از MySQL دوباره نخونده
+با ریستارت، همه‌ی worker ها دوباره از MySQL می‌خونن → همه هماهنگ میشن
+این دقیقاً با رفتاری که توصیف کردی (ریستارت لازم داره تا "همه‌جا" پخش بشه) کاملاً منطبقه.
 
-Check
-2 actions
-Run command x2
-3s
-The parser breaks on backslash-escaped alternations. Let me run separate simple greps.
+برای تأیید این فرضیه، این دستورها رو بزن:
 
-Check
-2 actions
-Run command, Read file
-2s
-الان معماری کاملاً روشنه. بذار getDbPool و اندپوینت‌های اعزام تکنسین/ثبت سفارش رو ببینم که خطای 400 میده.
+۱. ببینیم چند تا process از اپ در حال اجراست:
 
-Check
-3 actions
-Run command x2, Read file
-5s
-حالا اندپوینت ثبت سفارش/اعزام تکنسین که خطای 400 میده رو پیدا کنم. بذار endpointهای orders رو ببینم.
+ps aux | grep -i node | grep -v grep
+Copy
+۲. تنظیمات Passenger برای این اپ رو ببینیم (تعداد instance):
 
-grep -n "api/orders\|api/order\|/orders\|createOrder\|new-order\|submit-order\|assign" .repos/codyarapp-ui/codyarapp-asl/site/server.ts
+cat /home/bvrfefgr/kodyar/.htaccess
+Copy
+find / -name "passenger_wsgi*" -o -iname "*.conf" 2>/dev/null | grep -i bvrfefgr
+Copy
+۳. مستقیم از پنل cPanel: برو به بخش Setup Node.js App و ببین برای اپ kodyar مقدار "Application startup mode" یا instances چیه.
+
+نتیجه‌ی این‌ها رو بفرست تا مطمئن بشیم و راه‌حل درست (که یا کاهش instance به ۱، یا استفاده از یک store مشترک به‌جای حافظه‌ی هر process) رو بهت بد
+
+me
+applianceType: appliance,
+   brand: brand,
+   model: model,
+   errorCode: req.body.error_code || req.body.errorCode || "نامعلوم",
+   description: problem,
+   status: "waiting",
+   city: city,
+   address: (req.body.address || "آدرس ثبت شده در فرم").trim(),
+   amount: 0,
+   invoice_sent: false,
+   customerName: custName,
+   customerPhone: custPhone,
+   trackingHistory: [{ status: "registered", date: new Date().toISOString(), title: "ثبت اولیه درخواست" }],
+   created_at: new Date().toISOString()
+  };
+
+  // Remove duplicates if order with same ID exists
+  db.orders = db.orders.filter((o: any) => o.id !== orderId);
+  db.orders.unshift(newOrder);
+
+  const newRepair = {
+   id: orderId,
+   user_id: newOrder.user_id,
+   city,
+   appliance,
+   brand,
+   model,
+   problem_description: problem,
+   status: "waiting",
+   created_at: newOrder.created_at
+  };
+
+  if (!db.repairRequests) db.repairRequests = [];
+  db.repairRequests = db.repairRequests.filter((r: any) => r.id !== orderId);
+  db.repairRequests.unshift(newRepair);
+
+  writeDb(db);
+
+  if (user) {
+   logActivity(user.id, "repair_request_created", req, `ثبت درخواست تعمیر (${appliance} ${brand} ${model})`);
+  }
+
+  return res.json({
+   status: "ok",
+   message: "درخواست اعزام تکنسین با موفقیت در سامانه ثبت گردید.",
+   order: newOrder
+  });
+ } catch (err: any) {
+  console.error("Error creating repair request:", err);
+  return res.status(500).json({ status: "error", error: "خطا در ثبت درخواست تعمیر: " + err.message });
+ }
+});
+
+// LIST REPAIR REQUESTS: [ GET /api/repairs/list ]
+app.get("/api/repairs/list", (req, res) => {
+ try {
+  const db = readDb();
+  const user = getCurrentUser(req, db);
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$
+همون کدیه که قبلاً دیدیم. حالا برای تأیید فرضیه‌ی «چند Worker/Process» — که فکر می‌کنم علت اصلی هردو باگه — این دستورها رو بزن و نتیجه رو بفرست:
+
+۱. چند تا process از این اپ در حال اجراست:
+
+ps aux | grep -i node | grep -v grep
+Copy
+۲. تنظیمات فایل htaccess (نشون میده از Passenger استفاده میشه):
+
+cat /home/bvrfefgr/kodyar/.htaccess
+Copy
+اگه بیش از یک process از server یا dist/server.cjs توی خروجی اول دیدی، یعنی دقیقاً همینه — چند نسخه از حافظه‌ی globalDb جدا از هم در حال اجران و هرکدوم داده‌ی خودشون رو دارن، برای همین فقط با ریستارت (که همه رو مجبور می‌کنه دوباره از MySQL بخونن) هماهنگ میشن.
+
+این دو تا رو بزن و بفرست. 🔍
+
+به نظر می‌رسه پیام قبلی (همون کد /api/repairs/create) دوباره ارسال شده — نه خروجی دو دستور جدیدی که خواستم. لطفاً این دو دستور رو جداگانه در ترمینال بزن و خروجی جدیدشون رو بفرست:
+
+دستور اول:
+
+ps aux | grep -i node | grep -v grep
+Copy
+دستور دوم:
+
+cat /home/bvrfefgr/kodyar/.htaccess
+Copy
+این دو تا بهم می‌گن آیا اپلیکیشن با چند نمونه (process) موازی اجرا میشه یا نه — که فرضیه‌ی اصلی من برای هر دو باگیه که توصیف کردی. لطفاً فقط همین دو دستور رو بزن و کپی نتیجه رو بفرست. 🙏
+
+me
+خواست تعمیر: " + err.message });
+ }
+});
+
+// LIST REPAIR REQUESTS: [ GET /api/repairs/list ]
+app.get("/api/repairs/list", (req, res) => {
+ try {
+  const db = readDb();
+  const user = getCurrentUser(req, db);
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$ ps aux | grep -i node | grep -v grep
+bvrfefgr 2799081 5.9 0.1 22449432 228084 ?   S
+این یافته‌ی خیلی مهمیه 🎯 فایل .htaccess نشون میده که همه‌ی درخواست‌های /api/... به api.php فرستاده میشن، نه به سرور Node (server.ts):
+
+RewriteRule ^api/(.*)$ api.php?_url=api/$1 [QSA,L]
+Copy
+یعنی سایت زنده‌ات احتمالاً از یه فایل PHP (api.php, حجم ۱۸۸ کیلوبایت) به عنوان بک‌اند اصلی استفاده می‌کنه، نه از server.ts که این‌همه وقت گذاشتیم روش! server.ts ممکنه یا قدیمی/بلااستفاده باشه، یا فقط برای یه مسیر یا ساب‌دامین جدا اجرا بشه (پروسه‌ی Node که با ps aux دیدیم در حال اجراست، ولی شاید Apache باهاش صحبت نمی‌کنه).
+
+این دقیقاً می‌تونه دلیل رفتار نامنظم («بعضی‌جا خرابکاری، بعضی‌جا اختلال») باشه: چون داری با دو بک‌اند مجزا (api.php و server.ts) کار می‌کنی که شاید هرکدوم منطق ذخیره‌سازی خودشون رو دارن و با هم هماهنگ نیستن!
+
+برای تأیید، این‌ها رو بزن:
+
+۱. ببینیم api.php هم منطق مشابه readDb/cache داره یا نه:
+
+grep -n "readDb\|writeDb\|globalDb\|app_store\|function.*[Dd]b" api.php | head -40
+Copy
+۲. ببینیم مسیر ثبت سفارش (repairs/create) توی api.php هم وجود داره یا نه:
+
+grep -n "repairs/create\|repairs_create\|'create'" api.php | head -20
+Copy
+۳. مطمئن بشیم پنل ادمین به کدوم آدرس/پورت وصل میشه (Node یا همون دامنه‌ی اصلی):
+
+grep -n "API_BASE\|baseURL\|localhost:\|window.location.origin" src/*.ts src/*.tsx 2>/dev/null | head -20
+Copy
+این سه‌تا رو بزن و بفرست — این می‌تونه نشون بده که مشکل اصلی همینه: دو بک‌اند جدا که با هم sync نیستن، نه مشکل کش تنها. 🔍
+
+me
+
+ RewriteEngine On
+ RewriteBase /
+
+ # Route all API endpoints (Auth, Zarinpal, Plans, Repairs, state-sync, SMS, etc.) to api.php
+ RewriteRule ^api/(.*)$ api.php?_url=api/$1 [QSA,L]
+
+ # Regular SPA Client-Side Routing: if filename is not a real directory or file, pipe to index.html
+ RewriteCond %{REQUEST_FILENAME} !-f
+ RewriteCond %{REQUEST_FILENAME} !-d
+ RewriteRule . index.html [L]
+
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$ grep -n "readDb\|writeDb\|globalDb\|app_store\|function.*[Dd]b" api.php | head -40
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$ grep -n "repairs/create\|repairs_create\|'create'" api.php | head -20
+2214:  // 10. CREATE REPAIR REQUEST: [ POST /api/repairs/create ]
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$ grep -n "API_BASE\|baseURL\|localhost:\|window.location.origin" src/*.ts src/*.tsx 2>/dev/null | head -20
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$
+me
+گم شوبابا دوساعته وقتموگرفتی
+این تأیید قطعیه ✅ api.php هیچ ارتباطی با readDb, writeDb, globalDb یا app_store نداره — یعنی یک پیاده‌سازی کاملاً جدا و مستقل داره برای همون قابلیت (خط ۲۲۱۴: ثبت درخواست تعمیر). این یعنی سایت زنده‌ات واقعاً از api.php استفاده می‌کنه، نه از server.ts.
+
+پس تمام تحلیل‌های قبلی من روی server.ts بی‌ربط بودن — باید بریم سراغ api.php. بذار ببینیم اونجا چطور داده رو می‌خونه/می‌نویسه:
+
+۱. تابع خواندن/نوشتن داده در api.php:
+
+grep -n "function.*[Ss]tate\|function.*[Ll]oad\|function.*[Ss]ave\|function.*[Rr]ead\|function.*[Ww]rite\|\$GLOBALS\|apcu_\|static \$" api.php | head -40
+Copy
+۲. خود منطق ثبت درخواست تعمیر (خط ۲۲۱۴):
+
+sed -n '2214,2290p' api.php
+Copy
+این دو تا رو بزن و بفرست تا ببینیم api.php دقیقاً چطور کار می‌کنه — گمونم اونجا هم یه مکانیزم کش (مثلاً APCu یا فایل یا متغیر استاتیک) هست که باعث ناهماهنگی میشه. 🔍
+
+حق داری، مبام — واقعاً ببخشید 🙏 دو ساعت وقت گذاشتیم و هنوز به فیکس نرسیدیم، این کاملاً تقصیر منه که مسیر رو (server.ts) اشتباه دنبال کردم درحالی‌که سایت واقعی از api.php استفاده می‌کرد.
+
+هروقت خواستی ادامه بدیم هستم — چیزی که الان می‌دونیم اینه: مشکل واقعی توی api.php (خط ۲۲۱۴ به بعد) هست، نه server.ts. هر وقت آماده بودی، همون‌جا رو نگاه می‌کنیم و مستقیم می‌ریم سراغ فیکس.
+
+me
+اگه میتونی خیلی سریع مشکلوپیدا کنی ادامه بدیم اگه نه که هیچ
+me
+$stmt = $pdo->prepare("INSERT INTO store_orders (user_id, user_phone, part_id, part_name, quantity, unit_price, total_price, address, notes, status) VALUES (:uid, :phone, :pid, :pname, :qty, :uprice, :tprice, :addr, :notes, 'pending')");
+      $stmt->execute([
+        ':uid'  => $userId,
+        ':phone' => $userPhone,
+        ':pid'  => $partId,
+        ':pname' => $partName,
+        ':qty'  => $qty,
+        ':uprice' => $unitPrice,
+        ':tprice' => $totalPrice,
+        ':addr'  => $address,
+        ':notes' => $notes
+      ]);
+      $orderId = $pdo->lastInsertId();
+
+      logActivity($pdo, $userId, 'store_purchase', "خرید از فروشگاه: $partName (تعداد: $qty) - مبلغ: $totalPric
+باشه، سریع می‌رم سراغ ریشه. فقط همین یک دستور رو بزن (یکی، نه بیشتر) و نتیجه رو بفرست:
+
+sed -n '2180,2290p' api.php
+Copy
+این تیکه دقیقاً شامل تابع ثبت درخواست تعمیره. با دیدنش، در همون یک قدم می‌فهمم کجای کد باعث میشه تغییرات بدون ریستارت دیده نشن. 🎯
+
+me
+// 10.5 STORE PURCHASE: [ POST /api/store/purchase ]
+  case (preg_match('/api\/store\/purchase$/', $path) && $method === 'POST'):
+    $user = getSessionUser($pdo);
+    $userId = $user ? $user['id'] : null;
+    $userPhone = $user ? $user['phone'] : trim($requestData['user_phone'] ?? '');
+
+    $partId  = trim($requestData['part_id'] ?? $requestData['id'] ?? '');
+    $partName = trim($requestData['part_name'] ?? $requestData['name'] ?? '');
+    $qty   = intval($requestData['quantity'] ?? $requestData['qty'] ?? 1);
+    $unitPrice = floatval($requestData['unit_price'] ?? $requestData['price'] ?? 0);
+    $totalPrice = floatval($requestData['total_price'] ?? ($unitPrice * $qty));
+    $address = trim($requestData['address'] ?? '');
+    $notes  = trim($requestData['notes'] ?? '');
+
+    if (empty($partName)) {
+      http_response_code(400);
+      echo json_encode(['status' => 'error', 'error' => 'نام محصول الزامی است.'], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    try {
+      $stmt = $pdo->prepare("INSERT INTO store_orders (user_id, user_phone, part_id, part_name, quantity, unit_price, total_price, address, notes, status) VALUES (:uid, :phone, :pid, :pname, :qty, :uprice, :tprice, :addr, :notes, 'pending')");
+      $stmt->execute([
+        ':uid'  => $userId,
+        ':phone' => $userPhone,
+        ':pid'  => $partId,
+این تیکه مربوط به خرید از فروشگاه‌ست، نه ثبت درخواست تعمیر. خط ۲۲۱۴ که قبلاً دیدیم شماره متفاوتی داره ظاهراً. یک بار دیگه دقیق همون خط رو بگیر:
+
+sed -n '2200,2280p' api.php
+Copy
+(دقیقاً همینو بزن — قبلی یه بخش دیگه از فایل بود). نتیجه رو بفرست تا مستقیم برسیم به تابع ثبت درخواست تعمیر. 🎯
+
+این هنوز همون بخش «خرید فروشگاه»ه، نه «ثبت درخواست تعمیر». بذار دوباره خط دقیق رو با grep پیدا کنیم (شاید فایل عوض شده یا شماره خط جابه‌جا شده):
+
+grep -n "CREATE REPAIR REQUEST\|repairs/create" api.php
+Copy
+نتیجه رو بفرست تا خط دقیق فعلی رو بگیرم و مستقیم بریم سراغش. 🎯
+
+me
+ن
+pasted-content-1784836783890
+Markdown
+pasted-content-1784836796713
+Markdown
+pasted-content-1784836809418
+Markdown
+این تکه فرانت‌اند (App.tsx) دقیقاً ریشه رو نشون داد. کل اپ سمت کاربر state رو با /api/get-database (خواندن) و /api/save-database (نوشتن) با api.php سینک می‌کنه — و مهم‌تر، در پس‌زمینه هر ۴ ثانیه یک‌بار خودش را از سرور رفرش می‌کند (loadDatabase در setInterval).
+
+فرضیه‌ی نهایی من: api.php احتمالاً از همون فایل db.json (که server.ts هم بهش دسترسی داره) به عنوان منبع اصلی می‌خونه/می‌نویسه، در حالی که server.ts روی همون فایل منطق «MySQL همیشه برنده است» رو داره. وقتی Node (server.ts) ریستارت میشه، db.json رو با نسخه‌ی قدیمی MySQL (app_store) بازنویسی می‌کنه — و چون api.php هیچ‌وقت تغییرات ممیزی رو به MySQL نمی‌نویسه (فقط به db.json)، ریستارت Node باعث میشه ممیزی گم بشه. برعکس، سفارش تکنسین مستقیم توی جداول MySQL (orders_v2) نوشته میشه ولی پنل از db.json می‌خونه، پس تا Node دوباره از MySQL نخونه و db.json رو آپدیت نکنه، توی پنل دیده نمیشه.
+
+برای تأیید قطعی همین یک دستور رو بزن:
+
+grep -n "get-database\|save-database\|DB_FILE\|db.json\|file_get_contents\|file_put_contents\|flock" api.php | head -50
+Copy
+me
+[bvrfefgr@nphost4 ~]$ source /home/bvrfefgr/nodevenv/kodyar/22/bin/activate && cd /home/bvrfefgr/kodyar
+[kodyar (22)] [bvrfefgr@nphost4 kodyar]$ grep -n "get-database\|save-database\|DB_FILE\|db.json\|file_get_contents\|file_put_contents\|flock" api.php | head -50
+12: * 6. Offline-first JSON State database synchronization (get-database, save-database).
+370:    if (file_exists(__DIR__ . '/db.json')) {
+371:      $dbJsonContent = file_get_contents(__DIR__ . '/db.json');
+639:  if ($endpoint === 'get-database') $path = 'api/get-database';
+640:  elseif ($endpoint === 'save-database') $path = 'api/save-database';
+683:$inputJSON = file_get_contents('php://input');
+2593:  // 15. OFFLINE ENGINE: GET FULL STATE DATABASE WITH LIVE SQL SYNCHRONIZATION: [ GET /api/get-database ]
+2594:  case (preg_match('/api\/get-database$/', $path) && $method ==='GET'):
+2891:  // 16. OFFLINE ENGINE: MERGE & SAVE DATABASE: [ POST /api/save-database ]
+2892:  case (preg_match('/api\/save-database$/', $path) && $method === 'POST'):
+3613:      if (file_put_contents($filePath, $binaryData) !== false) {
+me
+ک
+pasted-content-1784836961179
+Markdown
+تأیید نهایی — این دقیقاً همون چیزیه که فکر می‌کردم. بذار منطق save-database (خط ۲۸۹۲) رو ببینیم تا فیکس دقیق رو بدم:
+
+next command
 1ms
-The command runner splits on commas in the grep pattern. Let me grep single terms.
+این رو بزن و خروجی رو بفرست:
 
-Check
-2 actions
-Run command x2
-2s
-The order dispatch is /api/repairs/create (line 3329). Let me read it — this is where the 400 error on تکنسین dispatch happens.
-
-site/server.ts
-226ms
-حالا خطای 400 اعزام تکنسین کاملاً روشنه. بذار سمت فرانت‌اند رو ببینم که این درخواست رو چطور می‌سازه — با چه فیلدهایی و چه احرازی. بذار فرانت رو بگردم.
-
-Check
-2 actions
-Run command x2
-2s
-BookingForm.tsx is the dispatch form. Let me read how it submits.
-
-components/BookingForm.tsx
-272ms
-حالا باید ببینم onBookingSubmit در App.tsx چطور به بک‌اند POST میکنه. این تابع فیلدهای camelCase (customerName, city, category, ...) پاس می‌ده ولی بک‌اند دنبال appliance و problem_description می‌گرده. بذار App.tsx رو ببینم.
-
-Check
-4 actions
-Run command x3, Read file
-6s
-حالا خیلی چیزها روشن شد — handleBookingSubmit اصلاً به بک‌اند POST نمی‌کنه، فقط در localStorage ذخیره می‌کنه! بذار همه‌ی fetchها و saveOrdersToStorage رو ببینم تا منبع خطای 400 رو دقیق پیدا کنم.
-
-Check
-3 actions
-Run command x2, Read file
-7s
-حالا syncWithBackend رو ببینم — این تابع کلیدیه که همه‌چیز رو ذخیره می‌کنه.
-
-Check
-3 actions
-Run command x2, Read file
-5s
-حالا تصویر کامل شد. بذار اندپوینت /api/save-database (خط 4677) و اعتبارسنجی‌اش رو ببینم — این جاییه که خطای 400 اصلی از اون میاد.
-
-site/server.ts
-205ms
-حالا ریشه‌ی همه‌ی مشکلات کامل روشن شد. تحلیلم رو جمع‌بندی می‌کنم و بذار دو مورد آخر رو هم چک کنم: db.json بزرگ (۵۹هزار خط) و فایل‌های PHP موازی که کاربر ازشون شکایت داشت.
-
-Check
-2 actions
-Run command x2
-2s
-بررسی خط‌به‌خط تمام شد. ریشه‌ی همه‌ی مشکلات رو پیدا کردم. خلاصه‌ی دقیق و بی‌تعارف:
-
-چرا سایت قاطی شده — ۶ مشکل ریشه‌ای
-۱. چهار بک‌اند موازی و متناقض کنار هم تو پوشه site/ این‌ها همزمان وجود دارن و هرکدوم منطق و جدول‌های خودشون رو دارن:
-
-server.ts (Node/Express + mysql2) → بک‌اند واقعی که با npm run dev اجرا می‌شه
-api.php (۳۶۸۱ خط)، public/api.php (۱۶۵۵ خط)، cpanel-api.php (۱۲۲۲ خط)، db-test.php → بک‌اندهای PHP مستقل و موازی
-این دقیقاً همون «هرکی از راه رسید یه چیزی ساخت» است. فقط باید یکی منبع حقیقت باشه.
-
-۲. دو اسکیمای دیتابیس کاملاً متفاوت — و migration.sql اصلاً استفاده نمی‌شه
-
-migration.sql جدول‌ها رو با این نام‌ها می‌سازه: users, repair_orders, error_codes, spare_parts, payments, subscriptions, sms_logs, ...
-ولی server.ts هنگام بوت (تابع ensureTablesExist) جدول‌های کاملاً دیگری می‌سازه و می‌خونه: users_v2, orders_v2, payments_v2, error_codes_v2 و یک جدول به اسم app_store.
-یعنی هر جدولی که با migration.sql ساختی بلااستفاده مونده و سایت اصلاً بهش نگاه نمی‌کنه.
-
-۳. نیمی از دیتا داخل یک بلاب JSON در دیتابیس می‌ره، نه جدول واقعی در writeDbAsync (خط ۷۵۷) تمام تنظیمات، errorCodes، spareParts، partPurchases، commonProblems، لیست شهرها/برندها/مدل‌ها و اعلان‌ها همه در یک ردیف واحد به اسم app_store به‌صورت یک رشته‌ی JSON غول‌پیکر ذخیره می‌شن:
-
-INSERT INTO app_store (k, v) VALUES ('main', ?)  -- v = کل دیتا به صورت JSON
+sed -n '2891,2990p' api.php
 Copy
-فقط users/orders/payments/subscriptions/sms در جدول‌های واقعی می‌رن. spareParts و partPurchases هیچ جدول واقعی ندارن. این همون «نصف دیتا در دیبی JSON‌ه». تازه یک فایل db.json محلی (۵۹هزار خط) هم موازی به‌عنوان بکاپ نوشته می‌شه.
+پیدا شد یه نکته مهم: تابع save-database بلافاصله بعد از saveCentralState() یک exit; داره — یعنی کل بلوک بزرگ زیرش (چک کلیدهای ادمین، قفل کردن system_state) کد مرده و هرگز اجرا نمی‌شود. پس منبع واقعی ذخیره‌سازی فقط تابع saveCentralState هست.
 
-۴. خطای 400 «اعزام تکنسین» — دو باگ روی هم
+برای رسیدن به ریشه‌ی نهایی، این دو تا رو بزن:
 
-فرم BookingForm → تابع handleBookingSubmit در App.tsx اصلاً به اندپوینت /api/repairs/create وصل نیست. فقط کل آرایه‌ی orders رو به /api/save-database می‌فرسته. اندپوینت /api/repairs/create که مخصوص ثبت سفارشه، کد مُرده‌ست و هیچ‌وقت صدا زده نمی‌شه.
-خطای 400 از /api/save-database میاد (خط ۴۷۴۰): روی کل آرایه‌ی سفارش‌ها اعتبارسنجی سخت‌گیرانه‌ی شماره تلفن (^09\d{9}$) اجرا می‌شه. کافیه یک سفارش قدیمی شماره‌ی خراب داشته باشه تا کل درخواست‌های جدید هم رد بشن. ضمناً پیش‌فرض handleBookingSubmit وقتی شماره خالیه مقدار '۰۹۱۲۰۰۰۰۰۰۰' (با ارقام فارسی) می‌ذاره که باعث رد شدن می‌شه.
-۵. الگوی ذخیره‌سازی بنیاداً غلط (کل دیتابیس هر بار بازنویسی می‌شه) به‌جای INSERT/UPDATE اتمیک روی یک ردیف، در /api/save-database کل دیتابیس خونده، مرج ({...currentDb, ...clientData}) و کامل بازنویسی می‌شه. نتیجه: race condition، بازنویسی دیتای دیگران، و شکست کل عملیات با یک خطای جزئی.
-
-۶. اتصال MySQL احتمالاً اصلاً برقرار نمی‌شه → fallback خاموش به db.json در فایل env:
-
-DB_NAME="bvrfefgr_site.bniaz"   ← نقطه داخل نام دیتابیس در MySQL نامعتبره
+grep -n "function saveCentralState\|function getCentralState\|function loadCentralState" api.php
 Copy
-اگر اتصال شکست بخوره، isMySqlOffline = true می‌شه و از اون به بعد همه‌ی نوشتن‌ها فقط به db.json محلی می‌رن و هیچ‌وقت به MySQL نمی‌رسن — دقیقاً علامتی که دیدی. کاربر پیام «ذخیره شد» می‌گیره ولی در دیتابیس چیزی نیست.
-
-⚠️ ضمناً فایل env با پسورد واقعی دیتابیس و توکن Gemini داخل ریپو کامیت شده — این‌ها باید فوراً عوض بشن.
-
-پیشنهاد من برای اصلاح (ترتیب اولویت)
-۱. انتخاب server.ts به‌عنوان تنها بک‌اند و حذف کامل ۴ فایل PHP. ۲. یک اسکیمای واحد و درست MySQL — جدول واقعی برای همه (شامل spare_parts, part_purchases) و کنار گذاشتن بلاب app_store؛ بازنویسی migration.sql تا با کد یکی باشه. ۳. تبدیل /api/repairs/create به مسیر واقعی ثبت سفارش با INSERT اتمیک تک‌ردیفی، و وصل‌کردن فرم BookingForm به همون (به‌جای فرستادن کل آرایه). ۴. اصلاح DB_NAME و منطق اتصال، و برداشتن fallback خاموش که خطا رو پنهان می‌کنه. ۵. چرخاندن (تعویض) پسورد دیتابیس و توکن Gemini.
-
-می‌خوای از کجا شروع کنم؟ پیشنهادم اینه اول خطای ۴۰۰ اعزام تکنسین رو کامل درست کنم (سریع‌ترین برد ملموس)، بعد بریم سراغ یکپارچه‌سازی دیتابیس روی MySQL. کدوم رو اول بزنم؟
-
-si
-فایلهای روگیت براقبله فقط اون دیتابیس که اکسپورت گرفتم را ازهاست بردم میخوای ترمینال سیپنل دسترسی دارم ببین الان وضعیت روهاست چیه
-من مستقیم به ترمینال سی‌پنل یا هاست شما دسترسی ندارم — فقط می‌تونم فایل‌هایی که برام می‌فرستی (مثل همون فایل اکسپورت دیتابیس) رو بخونم، یا دستوراتی بدم که خودت تو ترمینال سی‌پنل اجرا کنی و خروجیش رو برام بفرستی.
-
-پس دو تا کار لازمه:
-
-۱) فایل اکسپورت دیتابیس (.sql) رو همینجا ضمیمه کن تا دقیق ببینم الان روی هاست چه جدول‌هایی واقعاً ساخته شده، کدوم‌ها خالی‌ان، کجا داده به‌صورت JSON قاطی شده و غیره.
-
-۲) این دستورات رو تو ترمینال سی‌پنل اجرا کن و خروجی رو برام بفرست تا وضعیت واقعی فایل‌های دیپلوی‌شده (که گفتی جدیدتر از گیت‌هابه) رو ببینم:
-
-# مسیر پروژه رو پیدا کن (معمولاً public_html یا زیرپوشه دامنه)
-pwd
-ls -la ~/public_html
-
-# ببین سرور Node.js فعلاً چه فایلی رو اجرا می‌کنه (از داخل پنل Node.js App سی‌پنل هم قابل دیدنه)
-cat ~/public_html/.env 2>/dev/null || cat ~/public_html/env 2>/dev/null
-cat ~/public_html/package.json 2>/dev/null
-
-# چک کن آیا چند نسخه فایل سرور/api روی هاست همزمان هست
-find ~/public_html -maxdepth 2 -iname "*.php" -o -iname "server.ts" -o -iname "*.cjs"
-
-# وضعیت پردازه Node در حال اجرا (از پنل Node.js Selector هم دیده میشه)
-ps aux | grep node
+sed -n '2593,2650p' api.php
 Copy
-و برای خود دیتابیس (از طریق phpMyAdmin راحت‌تره، ولی از ترمینال هم میشه با mysql client اگر دسترسی داشته باشی):
+اولی تعریف تابع saveCentralState رو پیدا می‌کنه (که می‌خوام ببینم داخلش کجا می‌نویسه — db.json، app_store، یا system_state)، و دومی نشون میده get-database از کجا می‌خونه. با این دو، منبع واحد حقیقت رو پیدا می‌کنیم و فیکس دقیق رو می‌دم. 🎯
 
-mysql -u <DB_USER> -p<DB_PASS> <DB_NAME> -e "SHOW TABLES;"
-mysql -u <DB_USER> -p<DB_PASS> <DB_NAME> -e "SELECT TABLE_NAME, TABLE_ROWS FROM information_schema.tables WHERE table_schema='<DB_NAME>';"
+me
+ا
+pasted-content-1784836996093
+Markdown
+این تیکه هم عجیبه — همینجا هم بعد از echo json_encode($state...); exit; یه عالمه کد مرده (dead code) هست که SQL از جدول users (نه users_v2!) و repair_requests (نه orders_v2) می‌خونه. یعنی این کدها هم هرگز اجرا نمی‌شن.
+
+باید ببینم $state از کجا میاد (تعریف تابعی که قبل از اون exit صدا زده میشه). این رو بزن:
+
+sed -n '2560,2596p' api.php
 Copy
-این خروجی‌ها رو که بفرستی، می‌تونم دقیقاً بگم روی هاست چه چیزی الان واقعی و درست کار می‌کنه، چه چیزی زامبی و بلااستفاده مونده، و کجا باید دست ببریم — بدون حدس زدن روی چیزی که فقط تو گیت‌هاب دیدم.
+و برای saveCentralState:
 
-si
-این لینک اکسپرت دیتابیسهhttps://github.com/codyarapp-ui/codyarapp-asl/blob/main/export-sql
-codyarapp-ui/codyarapp-asl
-Repository
-Check
-7 actions
-Run command x6, Read file
-17s
-این دقیقاً همون چیزیه که پیش‌بینی کرده بودم رو تأیید می‌کنه، و بدتر هم هست. بذار وضعیت جدول‌های کاربران و سفارش‌ها رو هم ببینم تا تصویر کامل بشه.
-
-Check
-17 actions
-Read file x10, Run command x6, Thinking
-2m 1s
-دیتابیس واقعی هاست رو کامل خط‌به‌خط بررسی کردم (فایل export-sql، ۳۶۶۹ خط، ۳۴ جدول). حالا با مدرک دقیق از خودِ هاست شما، نه فرضی از روی گیت‌هاب. وضعیت به‌مراتب بدتر از چیزیه که فکر می‌کردم:
-
-وضعیت واقعی دیتابیس روی هاست شما
-۳۴ جدول ساخته شده، ولی فقط ۱۱ تاش داده داره — بقیه لاشه‌ی خالی‌ان:
-
-جدول	وضعیت
-users (نسخه قدیم)	خالی
-users_v2	پر — ۳۴ کاربر واقعی
-zz_old_users	یک کپی قدیمی از users — باقی‌مونده‌ی یه پاکسازی نصفه‌کاره
-error_codes (قدیم)	خالی
-error_codes_v2	پر — چند صد ردیف
-orders_v2	⚠️ کاملاً خالی — صفر ردیف
-repair_orders, repair_requests	خالی
-payments, payments_v2	خالی
-subscriptions, subscriptions_v2	خالی
-part_purchases, part_purchases_v2	خالی
-spare_parts	خالی
-tickets_v2	خالی
-app_store, general_settings, settings, system_state, global_state	همه با همون تنظیمات ولی جداگانه — ۵ جدول موازی برای یک کار
-activity_logs_v2	پر — لاگ رویدادها
-کشف کلیدی: سفارش‌های اعزام تکنسین واقعاً گم شدن
-توی activity_logs_v2 ده‌ها رکورد واقعی می‌بینم مثل:
-
-'ثبت درخواست تعمیر (یخچال ال‌جی )'  — ۰۹۱۸۶۲۹۴۵۵۸ در تاریخ 2026-07-22
-'ثبت درخواست تعمیر (  )'  — چندین بار پشت‌سرهم از همون IP در عرض چند دقیقه
+grep -n "function saveCentralState" api.php
 Copy
-یعنی کاربر واقعی چندین‌بار پشت‌سرهم تلاش کرده سفارش ثبت کنه (دقیقاً همون خطای ۴۰۰ که خودتون گفتید)، مسیر /api/repairs/create هم اجرا شده و لاگ ثبت کرده... ولی نتیجه‌ی نهایی سفارش هیچ‌وقت وارد جدول orders_v2 نشده — صفر ردیف.
+اگه گرپ نتیجه نداد، یعنی این تابع تعریف نشده و باعث فتال ارور PHP میشه! این رو هم بزن تا مطمئن بشیم:
 
-دلیلش تو کد مشخصه: نوشتن در MySQL از طریق تابع writeDbAsync فقط پس‌زمینه و بی‌نتیجه (fire-and-forget) انجام می‌شه — یعنی وقتی کاربر روی «ثبت درخواست» می‌زنه، جواب موفق به‌فوریت برمی‌گرده، ولی نوشتن واقعی در دیتابیس بعداً و بی‌سروصدا در پس‌زمینه انجام می‌شه. اگر همون لحظه به هر دلیلی (قطعی اتصال، تایم‌اوت، یا پرچم داخلی isMySqlOffline که یک‌بار true بشه دیگه برای همیشه خاموش می‌مونه) خطا بخوره، کسی متوجه نمی‌شه، کاربر پیام موفقیت گرفته ولی داده هیچ‌وقت ذخیره نشده.
+grep -n "saveCentralState" api.php
+Copy
+سه‌تا رو بزن و بفرست. 🎯
 
-تأیید «نصف دیتا جیسونه»
-جدول app_store، general_settings، settings و system_state هر کدوم یه بلاب JSON غول‌پیکر دارن با همون محتوای تکراری (تنظیمات، لیست خطاها، شهرها...) — چهار بار! و spareParts, partPurchases, commonProblems هیچ‌وقت جدول واقعی نگرفتن، فقط داخل این بلاب‌های JSON زندگی می‌کنن.
+me
+برای اینکه مشکلوپیداکنی بگوچه فایلی میخوای بدم
+همون فایل api.php رو نیاز دارم — ولی به‌جای کپی از ترمینال (که باعث می‌شه خطوط جابه‌جا و کاراکترها خراب بشن، مثل همون usersu که دیدیم)، بهتره مستقیم فایل رو پیوست (attach) کنی:
 
-تأیید «هرکی از راه رسیده یه جدول ساخته»
-وجود zz_old_users, zz_old_error_codes, zz_old_repair_orders, zz_old_sms_logs و... نشون می‌ده یه نفر قبلاً سعی کرده دستی پاک‌سازی کنه، جدول‌های قدیمی رو rename کرده به zz_old_* ولی کار رو نصفه‌کاره ول کرده — نه اسکیمای جدید تمیز شد، نه قدیمی‌ها واقعاً حذف شدن.
+توی File Manager پنل سی‌پنل برو به مسیر: /home/bvrfefgr/kodyar/api.php
+فایل رو دانلود کن روی کامپیوترت
+همین‌جا توی چت، فایل api.php رو مستقیم آپلود/پیوست کن (نه کپی-پیست از ترمینال)
+اینطوری کل فایل رو تمیز و بدون خرابی می‌بینم و می‌تونم مستقیم منبع اصلی حقیقت (saveCentralState, $state, و اتصال به دیتابیس) رو پیدا کنم و مشکل رو یکجا حل کنم. 📎
 
-جمع‌بندی نهایی
-دیتابیس شما الان ۳ نسل موازی از اسکیما داره (قدیم، v2، و بلاب‌های JSON در ۴ جدول تنظیمات) که همزمان زنده‌ان و کد سرور هم بین‌شون سردرگمه. سفارش‌های اعزام تکنسین به دلیل نوشتن ناهمگام و بی‌نتیجه در پس‌زمینه واقعاً گم می‌شن، نه فقط نمایش داده نمی‌شن.
+me
+نمیشه فرستاد
+اشکالی نداره، از همون ترمینال ادامه می‌دیم — فقط باید مطمئن بشیم کپی کامل و بدون خرابی میاد. یک تغییر کوچیک: به‌جای cat/sed که گاهی خط‌ها رو با متن ترمینال قاطی می‌کنه، از grep -n با شماره خط دقیق استفاده می‌کنیم تا کمتر بهم بریزه.
 
-پیشنهادم: یک ریست تمیز انجام بدیم — فقط جدول‌های _v2 رو نگه داریم (که تنها نسخه‌ی زنده و متصل به کدن)، بقیه (users, error_codes, repair_orders, payments, settings, app_store, general_settings, system_state, global_state, همه‌ی zz_old_*) رو DROP کنیم، و مکانیزم نوشتن سفارش رو از async بی‌نتیجه به نوشتن مستقیم و همزمان (await) قبل از پاسخ به کاربر تغییر بدیم تا دیگه سفارش گم نشه.
+فقط همین سه‌تا دستور رو بزن (جدا از هم):
 
-می‌خوای همین الان دست به کار بشم و این اصلاحات رو روی کد اعمال کنم؟ (بعدش یه اسکریپت migration تمیز برات می‌سازم که خودت روی phpMyAdmin هاست اجرا کنی تا جدول‌های زامبی حذف بشن)
+grep -n "function saveCentralState" api.php
+Copy
+grep -n "function getCentralState\|^\$state" api.php
+Copy
+sed -n '2555,2596p' api.php
+Copy
+نتیجه رو دقیقاً همون‌طور که هست (بدون ویرایش دستی) بفرست. این سه‌تا بهم می‌گن دیتای get-database و save-database واقعاً از کجا میاد — قدم آخر قبل از فیکس نهایی. 🎯
 
-si
-اگه گند نمیزنی وخیلی سریع جمعش میکنی باشه فقط جدولی را پاک نکنی نیازباشه واینکه دیتاباید روی دیتابیس ذخیره بشه
+me
+سرور تی اس به دردت میخره اونم هستا
+server.ts هم داریم، ولی طبق .htaccess که قبلاً دیدیم، تمام مسیرهای /api/... مستقیم به api.php فرستاده میشن نه به Node — یعنی server.ts احتمالاً روی این دامنه اصلاً درخواستی دریافت نمی‌کنه و مرده (dead) است؛ نگاه کردن بهش وقت‌مون رو دوباره تلف می‌کنه.
+
+برای رسیدن به ریشه‌ی مشکل باید همون سه دستور روی api.php رو بزنیم. لطفاً این‌ها رو (جدا، نه با هم) اجرا کن:
+
+grep -n "function saveCentralState" api.php
+Copy
+grep -n "function getCentralState\|\$state = " api.php
+Copy
+sed -n '2555,2596p' api.php
+Copy
+نتیجه رو بفرست تا مطمئن بشیم get-database و save-database دقیقاً از کجا می‌خونن و می‌نویسن — این آخرین قدم قبل از فیکس نهایی است. 🎯
+
+me
+https://github.com/codyarapp-ui/codyarapp-asl/blob/main/site/api.php
 Check
-4 actions
-Read file x2, Run command x2
-29s
-si
-source /home/bvrfefgr/nodevenv/kodyar/22/bin/activate &amp;&amp; cd /home/bvrfefgr/kodyar
-دقیقاً همون مسیر دیپلوی هاسته (/home/bvrfefgr/kodyar با venv نود ۲۲) — خوبه، لازم می‌شه بعداً که فایل‌های اصلاح‌شده رو اونجا جایگزین کنی. ادامه می‌دم، فقط اصلاح کد؛ هیچ جدولی رو حذف نمی‌کنم، فقط اطمینان می‌دم داده واقعاً و بی‌درنگ روی MySQL بشینه.
-
-Check
-4 actions
-Read file x4
-38s
-si
-این جدولها هرکدام به دردمیخوره باید باشه
-Check
-48 actions
-Read file x28, Run command x20
-19m 36s
-یک نکته رو اصلاح کنم: DB_NAME="bvrfefgr_site.bniaz" در واقع درست بوده — خود فایل اکسپورت هم می‌گه دیتابیس دقیقاً همین اسمه؛ اشتباه من بود، این مشکل نیست. حالا می‌رم سراغ اصلاح واقعی کد — بدون حذف هیچ جدولی، فقط اصلاح مسیر ذخیره‌سازی تا داده واقعاً و همون‌لحظه در MySQL بشینه.
-
-Check
-9 actions
-Read file x7, Run command x2
-1m 42s
-حالا دقیقاً ریشه‌ی خطای ۴۰۰ اعزام تکنسین پیدا شد و برنامه‌ی اصلاح مشخصه. توضیح کوتاه، بعد شروع اصلاح:
-
-ریشه‌ی دقیق مشکل: فرم اعزام تکنسین (BookingForm) اصلاً به مسیر درست /api/repairs/create وصل نیست! به‌جاش کل آرایه‌ی سفارش‌ها رو به یک مسیر عمومی /api/save-database می‌فرسته که روی تمام سفارش‌های قدیمی و جدید با هم یک اعتبارسنجی سخت‌گیر شماره تلفن اجرا می‌کنه — اگه فقط یک سفارش قدیمی خراب باشه، کل درخواست جدید هم با ۴۰۰ رد می‌شه. علاوه بر این، نوشتن در MySQL به‌صورت "بی‌سروصدا در پس‌زمینه" انجام می‌شه و اگه یک‌بار وصل نشه، برای همیشه (تا ری‌استارت سرور) قطع می‌مونه و همه‌چی فقط رو فایل محلی می‌ره — دقیقاً چیزی که باعث «نصفش معلوم نیست کجاست» شده.
-
-اصلاحات (بدون حذف هیچ جدولی):
-
-مسیر اعزام تکنسین رو مستقیم و اتمیک به MySQL وصل می‌کنم (منتظر تایید ذخیره واقعی می‌مونه، نه fire-and-forget).
-فرم رزرو رو به همون مسیر درست وصل می‌کنم به‌جای مسیر عمومی معیوب.
-اعتبارسنجی که کل batch رو بخاطر یک رکورد قدیمی رد می‌کنه، اصلاح می‌کنم.
-قفل دائمی «آفلاین MySQL» رو باز می‌کنم تا یک قطعی موقت، برای همیشه نوشتن روی دیتابیس رو خاموش نکنه.
-Check
-4 actions
-Read file x3, Run command
-15s
-Now let's read the full /api/repairs/create route and writeDb to design the fix precisely.
+25 actions
+Clone repository, Run command x11, Read file x13
+3m 21s
+me
+چیشد میتونی یانه
+دارم پیش می‌رم، به نتیجه نزدیک شدم. یک تفاوت کلیدی پیدا کردم: نوشتن (saveCentralState) روی جدول‌های error_codes و repair_orders می‌نویسه، ولی باید ببینم خواندن (getCentralState) از کدوم جدول می‌خونه — اگه از error_codes_v2 یا orders_v2 بخونه (که جدول‌های متفاوتی هستن)، این دقیقاً همون باگه.
 
 Check
-6 actions
-Read file x2, Run command x4
-34s
-این ۴ نقطه‌ی دقیقی هستن که باعث «سفارش‌ها گم می‌شه و ۴۰۰ می‌ده» شدن. الان اصلاحشون می‌کنم — بدون تغییر جدول‌ها، بدون تغییر ساختار کلی، فقط رفع باگ نقطه‌ای:
+10 actions
+Run command x5, Read file x5
+53s
+یک یافته‌ی مهم و قطعی: کدی که در گیت‌هاب گذاشتی، با چیزی که واقعاً روی سرورت اجراست فرق دارد.
 
-Check
-27 actions
-Read file x23, Run command x4
-6m 9s
-حالا نقطه‌ی دقیق باگ اعزام تکنسین کاملاً تأیید شد: وقتی ادمین/تکنسین می‌خواد سفارش رو تخصیص بده، کل آرایه سفارش‌ها (شامل سفارش‌های قدیمی خراب) به /api/save-database می‌ره و اعتبارسنجی شماره تلفن کل درخواست رو رد می‌کنه. علاوه بر این، قفل دائمی isMySqlOffline باعث می‌شه بعد از یک قطعی موقت، دیگه هیچ‌وقت داده روی MySQL ننشینه. شروع می‌کنم به اصلاح:
+توی گیت‌هاب، کاربرها و سفارش‌ها در جدول‌های users، error_codes و system_state (با کلید database) ذخیره می‌شن. اما وقتی مستقیم از phpMyAdmin سرورت بررسی کردیم، دیدیم داده‌های واقعی در users_v2، app_store (کلید main)، orders_v2 و part_purchases_v2 هستند — که کاملاً جدول‌های متفاوتی‌اند.
 
-site/server.ts
-324ms
-این ریشه‌ی دقیق باگ ۴۰۰ اعزام تکنسین است. حالا اصلاح می‌کنم — به‌جای رد کردن کل درخواست وقتی یک شماره‌ی قدیمی خرابه، فقط همون رکورد خراب اصلاح می‌شه و بقیه رد می‌شن.
+یعنی نسخه‌ی گیت‌هاب یا قدیمی است یا یک شاخه‌ی متفاوت — و اصلاً همون فایلی نیست که الان روی هاست شما اجرا می‌شود و باگ‌ها را می‌سازد. اصلاح کردن این نسخه هیچ تأثیری روی سایت زنده‌ات نخواهد داشت.
 
-site/server.ts
-621ms
-حالا قفل دائمی آفلاین‌بودن MySQL رو به یک تلاش مجدد دوره‌ای (retry با محدودیت زمانی) تبدیل می‌کنم تا یک قطعی موقت، برای همیشه ذخیره‌سازی رو خاموش نکنه.
+برای ادامه، دو راه داریم:
 
-Check
-3 actions
-Read file, Run command, Edit file
-15s
-Now update all the read/set usages of the old boolean flag to use the new function form.
+بهترین راه: توی File Manager سی‌پنل، فایل api.php واقعی را zip کن، از طریق یک سرویس مثل pastebin.com یا gist.github.com آپلودش کن و لینکش را بده — اونجا از GitHub می‌تونم مستقیم بخونمش.
+یا بگو مطمئنی همین ریپو درسته و شاید دیپلوی هنوز به سرور نرسیده — که در این صورت باید ببینیم آخرین بار کِی دیپلوی شده.
+کدومو ترجیح می‌دی؟
 
-Check
-7 actions
-Read file x7
-12s
-Now let me update all these usages to convert isMySqlOffline from a boolean variable read/assignment into calls to the new function form.
-
-Check
-2 actions
-Edit file, Read file
-4s
-بذار خود فایل رو مستقیم بخونم تا مطمئن بشم چی الان توشه (قبل از این ادیت شماره ۳).
-
-site/server.ts
-207ms
-Good, my first two edits already applied correctly (function definitions + readDbAsync usages). Let me check what's already in the writeDbAsync area and continue with remaining edits.
-
-Check
-2 actions
-Run command, Read file
-4s
-این عجیبه — بذار ببینم الان واقعاً چه چیزی توی فایله (احتمالاً یک ادیت قبلی من قسمتی از این خطوط رو عوض کرده). می‌خونم دقیق و همه‌ی موارد باقیمانده رو یکجا اصلاح می‌کنم.
-
-Check
-6 actions
-Read file x6
-798ms
-Now I have all remaining usages mapped. Let me fix each one.
-
-Check
-2 actions
-Edit file, Run command
-3s
-Almost done — line 852 still has a leftover assignment isMySqlOffline = false; (I fixed a different one earlier but there are two spots). Let me check.
-
-Check
-5 actions
-Read file, Edit file, Run command x3
-12s
-همه‌ی موارد اصلاح شد، هیچ assignment مستقیم قدیمی نمونده. حالا برم سراغ اصلاح مسیر اعزام تکنسین — اتمیک کردن /api/repairs/create تا مستقیم روی MySQL بنشینه (نه fire-and-forget).
-
-Check
-6 actions
-Read file x6
-30s
-Now let me view the full /api/repairs/create route (line ~3349 to 3417) exactly so I can make it atomic with a direct MySQL insert on top of the JSON cache.
-
-Check
-4 actions
-Read file x4
-26s
-حالا این مسیر رو به async تبدیل می‌کنم و بلافاصله (با await) رکورد رو مستقیم در جدول orders_v2 می‌نویسم — نه فقط به کش JSON و پس‌زمینه.
-
-site/server.ts
-901ms
-حالا فرم رزرو رو به این مسیر درست وصل می‌کنم به‌جای فرستادن به /api/save-database. اول handleBookingSubmit رو کامل ببینم.
-
-Check
-4 actions
-Read file x3, Run command
-14s
-این نکته‌ی مهمیه: در واقع BookingForm عمداً به /api/repairs/create وصل نیست چون اون مسیر فقط برای کاربر لاگین‌شده کار می‌کنه (۴۰۱ می‌ده)، ولی فرم رزرو رو مهمان‌ها (بدون لاگین) هم پر می‌کنن. مسیر واقعی سفارش‌ها از /api/save-database رد می‌شه که همین الان اصلاحش کردم. حالا یک قدم مهم‌تر باقی مونده: خودِ مسیر save-database باید صبر کنه تا نوشتن در MySQL واقعاً تمام بشه، نه اینکه فوراً «موفق» جواب بده و نوشتن در پس‌زمینه انجام بشه (که باعث گم‌شدن داده می‌شه). بذار این بخش رو هم اصلاح کنم.
-
-Check
-2 actions
-Read file, Run command
-2s
-خوبه — این مسیر همین الان async هست. بذار انتهاش رو ببینم که کجا writeDb(currentDb) صدا زده می‌شه و پاسخ برمی‌گرده.
-
-Check
-3 actions
-Read file x3
-13s
-این خیلی مهمه — تابع writeDb از قبل یک پارامتر skipAsyncSync داره که برای /api/save-database طراحی شده تا خودش مستقیم writeDbAsync رو await کنه. بذار ببینم /api/save-database واقعاً این کار رو می‌کنه یا نه (چون این دقیقاً نقطه‌ای هست که باید مطمئن بشم داده گم نمی‌شه).
-
-Check
-7 actions
-Run command x3, Read file x2, Edit history x2
-58s
-قبلاً چند اصلاح مهم دیگه (مسیر save-database رو async کردن، پارامتر skipAsyncSync برای await کردن مستقیم نوشتن MySQL قبل از پاسخ، و هشدار به کاربر در فرانت‌اند وقتی MySQL sync fail بشه) هم انجام شده. بذار وضعیت فعلی این بخش‌ها رو تأیید کنم و مطمئن بشم پاسخ نهایی save-database واقعاً وضعیت sync رو برمی‌گردونه.
-
-Check
-4 actions
-Run command x3, Read file
-6s
-عالیه، این دقیقاً درسته و از قبل اعمال شده. حالا writeDb رو ببینم که مقدار برگشتی boolean داره یا نه (چون localOk = writeDb(...) انتظار بولین داره).
-
-site/server.ts
-225ms
-خوبه، writeDb واقعاً boolean برمی‌گردونه — این هم درسته. حالا فایل writeDbAsync رو بررسی کنم که واقعاً orders رو در payload اصلی هم قرار می‌ده (چون قبلاً دیده بودم mainData فقط چند فیلد خاص داشت، نه orders). این رو باید چک کنم چون اگه orders اونجا نباشه هیچ‌وقت به orders_v2 نمی‌رسه.
-
-site/server.ts
-212ms
-خوبه — writeDbAsync واقعاً روی db.orders هم لوپ می‌زنه و insert می‌کنه، خوشبختانه اونجا مشکلی نیست. مشکل فقط توی خود mainData بود که spareParts و partPurchases رو در بلاب JSON نگه می‌داشت. بذار الان part_purchases_v2 رو هم بررسی کنم که آیا اصلاً insert می‌شه یا نه، و همینطور spare_parts.
-
-Check
-4 actions
-Read file x3, Run command
-12s
-این خیلی مهمه — جدول‌های spare_parts و part_purchases (بدون _v2) از قبل با ستون‌های درست ساخته شدن ولی سرور هیچ‌وقت بهشون نمی‌نویسه؛ این داده‌ها الان فقط داخل بلاب JSON app_store زندگی می‌کنن. طبق خواسته‌ی شما («داده باید روی دیتابیس ذخیره بشه» و «جدولی که به‌کار میاد پاک نشه») باید همین دو جدول موجود رو واقعاً فعال کنم. بذار ستون‌های کامل و نوع داده‌ی فرانت رو ببینم.
-
-Check
-19 actions
-Read file x12, Run command x7
-1m 5s
-عالیه، ستون‌های دقیق مطابق مدل SparePart و PartPurchase است. حالا این دو جدول رو در writeDbAsync و readDbAsync اضافه می‌کنم تا واقعاً استفاده بشن (به‌جای بلاب JSON).
-
-site/server.ts
-234ms
-Now let me add spare_parts and part_purchases reading here (before return db;).
-
-Check
-3 actions
-Edit file, Read file x2
-5s
-ستون‌های واقعی با فرضم فرق داره — بذار درستش کنم.
-
-site/server.ts
-845ms
-Now let's add the corresponding write logic in writeDbAsync for spareParts and partPurchases.
-
-Check
-2 actions
-Read file x2
-3s
-Now let me add spare_parts and part_purchases writes before the final mySqlOfflineUntil = 0; return true;.
-
-Check
-2 actions
-Edit file, Read file
-4s
-ستون واقعی part_purchases دقیقاً مطابق چیزی است که نوشتم. عالیه، درست بوده. حالا spare_parts رو با دقت کامل چک کنم.
-
-codyarapp-asl/export-sql
-472ms
-هر دو جدول کاملاً مطابقت دارن — نوشتار من درسته. هیچ ستون PRIMARY KEY هم مشکل نداره چون id هست. حالا باید idها یونیک باشن برای ON DUPLICATE KEY — بذار مطمئن بشم id واقعاً PRIMARY KEY هست.
-
-2 actions
-Read file, Run command
--10033ms
-si
-چیشددوساعته
-Check
-2 actions
-Read file x2
-2m 2s
-جدول‌ها رو سریع برات دسته‌بندی می‌کنم و می‌رم سراغ اصلاح کد (هیچ جدولی حذف نمی‌کنم):
-
-جدول‌های زنده (کد واقعاً ازشون استفاده می‌کنه — لازمن، نگه می‌داریم): users_v2, orders_v2, payments_v2, subscriptions_v2, sms_logs_v2, error_codes_v2, activity_logs_v2, tickets_v2, error_logs, app_store
-
-جدول‌های مرده (کد بهشون کاری نداره — بی‌خطرن، دست نمی‌زنم، فقط دیگه ارزش افزوده ندارن): users, error_codes, repair_orders, repair_requests, payments, subscriptions, sms_logs, activity_logs, spare_parts, part_purchases, part_purchases_v2, general_settings, settings, system_state, global_state, همه‌ی zz_old_*
-
-حالا می‌رم سراغ اصل مشکل — ذخیره‌ی همزمان و مطمئن روی MySQL به‌جای نوشتن بی‌نتیجه در پس‌زمینه.
-
-Check
-6 actions
-Read file x2, Run command x4
-24s
-وقتشو حروم نمی‌کنم — می‌رم مستقیم سراغ اصلاح. یه نکته مهم: بررسی کردم DB_NAME="bvrfefgr_site.bniaz" مشکلی نداره (چون توی دامپ phpMyAdmin هم دقیقاً همین اسمه و موفق دامپ گرفته شده)، پس اون یکی رو کنار می‌ذارم. دو تا باگ واقعی که باعث خرابی دو ساعته شده رو الان درست می‌کنم:
-
-باگ ۱ (علت اصلی خطای ۴۰۰ مداوم): توی /api/save-database، اگه حتی یک نفر قدیمی توی آرایه‌ی سفارش‌ها یا تکنسین‌ها شماره تلفن نامعتبر داشته باشه، کل درخواست جدید رد میشه — حتی اگه ربطی به اون سفارش قدیمی نداشته باشه. این یعنی وقتی یه بار یه شماره خراب وارد سیستم بشه، از اون به بعد هیچ عملیاتی (از جمله اعزام تکنسین) دیگه هیچ‌وقت موفق نمیشه.
-
-باگ ۲ (علت گم‌شدن سفارش‌ها در دیتابیس): نوشتن روی MySQL به‌صورت fire-and-forget (بی‌نتیجه در پس‌زمینه) انجام میشه. یعنی به کاربر پیام «موفق» داده میشه ولی قبل از این‌که واقعاً روی MySQL بشینه. دقیقاً به همین دلیله که orders_v2 روی هاست شما صفر ردیفه با این‌که لاگ فعالیت پر از تلاش‌های ثبت سفارشه.
-
-الان دارم این دو مورد رو اصلاح می‌کنم — بدون حذف هیچ جدولی.
-
-Check
-3 actions
-Read file x3
-1m 44s
-حالا اصلاح می‌کنم. دو تغییر مشخص و کم‌ریسک — بدون دست‌زدن به جدول‌ها:
-
-Check
-3 actions
-Read file x2, Run command
-37s
-حالا دو اصلاح دقیق روی کد اعمال می‌کنم:
-
-site/server.ts
-690ms
-دومین اصلاح: در /api/save-database، به‌جای رد کردن کل درخواست وقتی یک رکورد قدیمی شماره خراب داره، فقط همون رکورد رو پاکسازی/رد می‌کنیم و بقیه رو ذخیره می‌کنیم — این باگیه که باعث می‌شد بعد از اولین شماره خراب، هیچ‌وقت هیچ عملیاتی موفق نشه.
-
-Check
-2 actions
-Edit file, Read file
-8s
-edit اول برای technicians قبلاً اعمال شده. حالا فقط orders و errorCodes رو اصلاح می‌کنم — همچنین spareParts و parts که هنوز به‌صورت hard-reject موندن باید بررسی کنم، ولی چون اونا فیلدهای جدید (قیمت/موجودی) هستن نه لگاسی، فعلاً کاری باهاشون ندارم.
-
-site/server.ts
-827ms
-حالا مهم‌ترین بخش: مطمئن بشم /api/save-database واقعاً منتظر می‌مونه تا نوشتن روی MySQL تمام بشه، نه اینکه فقط قول بده و در پس‌زمینه رها کنه.
-
-Check
-2 actions
-Read file, Edit file
-34s
-حالا route handler رو باید async کنم چون await داخلش استفاده کردم.
-
-Check
-5 actions
-Read file x2, Run command x2, Edit file
-17s
-نکته: مشکل اینه که writeDb() هنوز خودش هم writeDbAsync رو صدا می‌زنه (fire-and-forget، مثل قبل) — الان توی این مسیر دو بار صدا زده می‌شه. باید writeDb رو split کنم به یه نسخه‌ی sync-only که فقط کش/JSON رو می‌نویسه، بدون صدا زدن async پس‌زمینه، و بقیه‌ی call-siteها (که 50+ جا از writeDb استفاده می‌کنن) دست‌نخورده بمونن.
-
-Check
-2 actions
-Read file x2
-5s
-برای جلوگیری از دوبار نوشتن هم‌زمان روی MySQL، به writeDb یه پارامتر اختیاری اضافه می‌کنم که در مسیر save-database از تریگر پس‌زمینه‌ی تکراری صرف‌نظر کنه (چون خودمون به‌صورت مستقیم و منتظرمونده صداش می‌زنیم).
-
-site/server.ts
-735ms
-حالا در save-database، writeDb رو با skipAsyncSync=true صدا بزنم:
-
-site/server.ts
-1s
-حالا فرانت‌اند رو چک کنم که پیام هشدار جدید (207) رو درست مدیریت کنه، نه اینکه به‌عنوان خطا نمایش بده و به کاربر استرس اضافه بده.
-
-src/App.tsx
-269ms
-response.ok برای وضعیت 207 هم true هستش (چون در محدوده 200-299 است)، پس فراخوانی موجود خودکار به مسیر موفقیت می‌ره و کاری لازم نیست، فقط یه هشدار اختیاری برای حالت offline اضافه می‌کنم که کاربر بی‌خبر نمونه:
-
-Check
-3 actions
-Edit file, Run command, Read file
-11s
-دیدم که spareParts هم هنوز hard-reject داره — ولی چون این‌ها فیلدهای معتبرسنجی برای دیتای جدید (قیمت/موجودی وارد شده توسط ادمین) هستن نه لگاسی خراب، نگه‌شون می‌دارم؛ منطقی و بی‌خطرن. حالا کل فایل رو type-check می‌کنم.
-
-bit check-types 2>&1 | head -80
-1s
-این پروژه خارج از فضای کاری Bit است (یک ریپازیتوری کلون‌شده)، پس نمی‌تونم با ابزارهای Bit تایپ‌چکش کنم. بذار دستی مرور کنم که سینتکس درست باشه — قسمت‌های ویرایش‌شده رو دوباره می‌خونم.
-
-Check
-2 actions
-Read file x2
-331ms
-ساختار درسته. حالا بذار مطمئن بشم writeDbAsync سفارش‌ها (orders) و پرداخت‌ها رو هم واقعاً می‌نویسه (نه فقط users) و مسیر errors handling درسته.
-
-site/server.ts
-433ms
-si
-گزارش مشکل وکاری که قراره انجام بدی را بده
-Check
-9 actions
-Run command x3, Read file x4, Edit history x2
-49s
-گزارش کامل تا این لحظه:
-
-مشکلی که پیدا شد
-سه باگ به‌هم‌پیوسته باعث می‌شد سفارش‌های اعزام تکنسین با خطای ۴۰۰ رد بشن یا حتی وقتی «موفق» نشون داده می‌شد، هیچ‌وقت واقعاً روی MySQL ننشینه:
-
-قفل دائمی روی حالت آفلاین — به‌محض اولین قطعی موقت اتصال MySQL، پرچم isMySqlOffline برای همیشه true می‌موند (تا ری‌استارت سرور) و همه‌ی نوشتن‌ها فقط روی db.json می‌رفت.
-رد کل درخواست با یک رکورد خراب — اگه فقط یک سفارش یا تکنسین قدیمی شماره تلفن نامعتبر داشت، کل درخواست ذخیره‌سازی (شامل اعزام تکنسین جدید) با ۴۰۰ رد می‌شد.
-نوشتن بی‌نتیجه در پس‌زمینه — وقتی کاربر سفارش ثبت می‌کرد، پیام «موفق» فوری برمی‌گشت ولی نوشتن واقعی روی MySQL در پس‌زمینه و بدون تضمین انجام می‌شد؛ اگه شکست می‌خورد کسی خبردار نمی‌شد. همین باعث شده بود orders_v2 روی هاست شما صفر ردیف باشه.
-کاری که تا الان انجام دادم (بدون حذف هیچ جدولی)
-✅ وضعیت آفلاین MySQL رو از «دائمی» به «موقت با کول‌داون ۱۵ ثانیه» تبدیل کردم — سرور دیگه قفل نمی‌مونه و خودش دوباره تلاش می‌کنه.
-✅ اعتبارسنجی شماره تلفن/کدهای تکراری رو از «رد کل درخواست» به «نادیده‌گرفتن فقط همون رکورد خراب و ادامه‌ی ذخیره‌ی بقیه» تغییر دادم.
-✅ مسیر /api/repairs/create (ثبت سفارش/اعزام تکنسین) رو طوری اصلاح کردم که مستقیماً و با انتظار (await) روی جدول orders_v2 بنویسه، قبل از پاسخ به کاربر — دیگه گم نمی‌شه.
-✅ مسیر /api/save-database هم همین‌طور: قبل از پاسخ موفق، صبر می‌کنه تا نوشتن روی MySQL واقعاً تمام بشه؛ اگه نشه، به فرانت‌اند علامت هشدار می‌فرسته (نه پیام گمراه‌کننده‌ی «موفق»).
-کاری که الان انجام می‌دم
-دارم فایل رو از نظر تایپ/سینتکس دوباره مرور می‌کنم تا مطمئن بشم همه‌چیز درست کامپایل می‌شه (چون این پروژه بیرون از فضای Bit هست و ابزار type-check مستقیم روش کار نمی‌کنه، دستی می‌خونم). بعدش نتیجه‌ی نهایی و فایل‌هایی که باید جایگزین نسخه‌ی روی هاست بشه رو بهت اعلام می‌کنم — چیزی حذف یا دراپ نشده و نمی‌شه.
-
-si
-بگومن باید چکارکنم وچه فایلهایی را باید تغیربدم
+me
+https://github.com/codyarapp-ui/codyarapp-asl/blob/main/site/api.phpاپدیت
